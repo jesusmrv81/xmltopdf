@@ -105,9 +105,9 @@
 
     <!-- ═══════════════════════════════════════════════════════════════
          CONCEPTOS
-         Zebra striping mediante clases row-odd/row-even (sin :nth-child
-         porque wkhtmltopdf lo soporta de forma inconsistente)
+         (oculta para complementos de pago)
          ═══════════════════════════════════════════════════════════════ -->
+    {% if cfdi.tipo_comprobante != 'P' %}
     <section class="conceptos">
         <div class="section-title">Conceptos / Servicios</div>
         <table class="conceptos-table">
@@ -144,37 +144,37 @@
             </tbody>
         </table>
     </section>
+    {% endif %}
 
     <!-- ═══════════════════════════════════════════════════════════════
          COMPLEMENTO DE PAGO 2.0
          ═══════════════════════════════════════════════════════════════ -->
     {% if cfdi.pagos %}
     <section class="pagos-section">
-        <div class="section-title">Complemento de Pago 2.0</div>
+        <div class="section-title">Complemento de Pago</div>
 
-        <div class="pagos-totales">
-            <table class="totals-table">
-                <tr>
-                    <td class="total-label-cell">Monto Total de Pagos</td>
-                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</td>
-                </tr>
-                {% if cfdi.pagos.totales.total_traslados_base_iva16 %}
-                <tr>
-                    <td class="total-label-cell">Base IVA 16%</td>
-                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
-                </tr>
-                <tr>
-                    <td class="total-label-cell">IVA 16%</td>
-                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
-                </tr>
-                {% endif %}
-                {% if cfdi.pagos.totales.total_retenciones_iva %}
-                <tr>
-                    <td class="total-label-cell">Retención IVA</td>
-                    <td class="total-value-cell">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</td>
-                </tr>
-                {% endif %}
-            </table>
+        <!-- Card destacado -->
+        <div class="pagos-card">
+            <div class="pagos-card-amount">
+                <span class="pagos-card-label">Monto Total de Pagos</span>
+                <span class="pagos-card-value">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</span>
+            </div>
+            {% if cfdi.pagos.totales.total_traslados_base_iva16 %}
+            <div class="pagos-card-row">
+                <span class="pagos-card-label">Base IVA 16%</span>
+                <span class="pagos-card-data">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</span>
+            </div>
+            <div class="pagos-card-row">
+                <span class="pagos-card-label">IVA 16%</span>
+                <span class="pagos-card-data">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</span>
+            </div>
+            {% endif %}
+            {% if cfdi.pagos.totales.total_retenciones_iva %}
+            <div class="pagos-card-row pagos-card-ret">
+                <span class="pagos-card-label">Retención IVA</span>
+                <span class="pagos-card-data">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</span>
+            </div>
+            {% endif %}
         </div>
 
         {% for pago in cfdi.pagos.pago %}
@@ -269,7 +269,9 @@
 
     <!-- ═══════════════════════════════════════════════════════════════
          TOTALES — tabla alineada a la derecha con margin-left: auto
+         (oculta para complementos de pago)
          ═══════════════════════════════════════════════════════════════ -->
+    {% if cfdi.tipo_comprobante != 'P' %}
     <section class="totals-section">
         <table class="totals-table">
             <tr>
@@ -308,6 +310,7 @@
             </tr>
         </table>
     </section>
+    {% endif %}
 
     <!-- ═══════════════════════════════════════════════════════════════
          TIMBRE FISCAL DIGITAL — tabla HTML de 2 columnas

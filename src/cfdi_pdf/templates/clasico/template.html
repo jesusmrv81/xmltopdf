@@ -122,8 +122,9 @@
 
     <!-- ═══════════════════════════════════════════════════════════════
          CONCEPTOS — tabla fiscal clásica
-         Zebra con clases explícitas (no :nth-child)
+         (oculta para complementos de pago)
          ═══════════════════════════════════════════════════════════════ -->
+    {% if cfdi.tipo_comprobante != 'P' %}
     <div class="conceptos-section">
         <div class="section-title">Conceptos</div>
         <table class="conceptos-table">
@@ -160,6 +161,7 @@
             </tbody>
         </table>
     </div>
+    {% endif %}
 
     <!-- ═══════════════════════════════════════════════════════════════
          COMPLEMENTO DE PAGO 2.0
@@ -167,29 +169,29 @@
          ═══════════════════════════════════════════════════════════════ -->
     {% if cfdi.pagos %}
     <div class="pagos-section">
-        <div class="section-title">Complemento de Pago 2.0</div>
+        <div class="section-title">Complemento de Pago</div>
 
-        <!-- Totales del Complemento -->
-        <div class="pagos-totales-header">
-            <table class="totals-table">
-                <tr>
-                    <td class="total-label-cell">Monto Total de Pagos</td>
-                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</td>
+        <!-- Card destacado -->
+        <div class="pagos-card">
+            <table>
+                <tr class="pagos-card-amount">
+                    <td class="pagos-card-label">Monto Total de Pagos</td>
+                    <td class="pagos-card-value">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</td>
                 </tr>
                 {% if cfdi.pagos.totales.total_traslados_base_iva16 %}
-                <tr>
-                    <td class="total-label-cell">Base IVA 16%</td>
-                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
+                <tr class="pagos-card-row">
+                    <td class="pagos-card-label">Base IVA 16%</td>
+                    <td class="pagos-card-data">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
                 </tr>
-                <tr>
-                    <td class="total-label-cell">IVA 16%</td>
-                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
+                <tr class="pagos-card-row">
+                    <td class="pagos-card-label">IVA 16%</td>
+                    <td class="pagos-card-data">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
                 </tr>
                 {% endif %}
                 {% if cfdi.pagos.totales.total_retenciones_iva %}
-                <tr>
-                    <td class="total-label-cell">Retención IVA</td>
-                    <td class="total-value-cell">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</td>
+                <tr class="pagos-card-row pagos-card-ret">
+                    <td class="pagos-card-label">Retención IVA</td>
+                    <td class="pagos-card-data">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</td>
                 </tr>
                 {% endif %}
             </table>
@@ -305,7 +307,9 @@
 
     <!-- ═══════════════════════════════════════════════════════════════
          TOTALES — tabla a la derecha
+         (oculta para complementos de pago)
          ═══════════════════════════════════════════════════════════════ -->
+    {% if cfdi.tipo_comprobante != 'P' %}
     <section class="totals-section">
         <table class="totals-table">
             <tr>
@@ -344,6 +348,7 @@
             </tr>
         </table>
     </section>
+    {% endif %}
 
     <!-- ═══════════════════════════════════════════════════════════════
          TIMBRE FISCAL DIGITAL
