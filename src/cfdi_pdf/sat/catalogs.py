@@ -56,6 +56,31 @@ class SATCatalogs:
         "CP01": "Pagos",
     }
 
+    FORMA_PAGO_P: Final[dict[str, str]] = {
+        "01": "Efectivo",
+        "02": "Cheque nominativo",
+        "03": "Transferencia electrónica de fondos",
+        "04": "Tarjeta de crédito",
+        "05": "Monedero electrónico",
+        "06": "Dinero electrónico",
+        "08": "Vales de despensa",
+        "12": "Dación en pago",
+        "13": "Pago por subrogación",
+        "14": "Pago por consignación",
+        "15": "Condonación",
+        "17": "Compensación",
+        "23": "Novación",
+        "24": "Confusión",
+        "25": "Remisión de deuda",
+        "26": "Prescripción o caducidad",
+        "27": "A satisfacción del acreedor",
+        "28": "Tarjeta de débito",
+        "29": "Tarjeta de servicios",
+        "30": "Aplicación de anticipos",
+        "31": "Intermediario pagos",
+        "99": "Por definir",
+    }
+
     FORMA_PAGO: Final[dict[str, str]] = {
         "01": "Efectivo",
         "02": "Cheque nominativo",
@@ -137,6 +162,11 @@ class SATCatalogs:
     def get_forma_pago(cls, clave: str) -> str:
         """Get forma de pago description."""
         return cls.FORMA_PAGO.get(clave, f"Desconocido ({clave})")
+
+    @classmethod
+    def get_forma_pago_p(cls, clave: str) -> str:
+        """Get forma de pago (Pagos20) description."""
+        return cls.FORMA_PAGO_P.get(clave, f"Desconocido ({clave})")
 
     @classmethod
     def get_metodo_pago(cls, clave: str) -> str:

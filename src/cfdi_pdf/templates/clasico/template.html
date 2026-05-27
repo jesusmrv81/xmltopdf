@@ -162,6 +162,148 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════
+         COMPLEMENTO DE PAGO 2.0
+         Solo se muestra cuando TipoDeComprobante = 'P'
+         ═══════════════════════════════════════════════════════════════ -->
+    {% if cfdi.pagos %}
+    <div class="pagos-section">
+        <div class="section-title">Complemento de Pago 2.0</div>
+
+        <!-- Totales del Complemento -->
+        <div class="pagos-totales-header">
+            <table class="totals-table">
+                <tr>
+                    <td class="total-label-cell">Monto Total de Pagos</td>
+                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</td>
+                </tr>
+                {% if cfdi.pagos.totales.total_traslados_base_iva16 %}
+                <tr>
+                    <td class="total-label-cell">Base IVA 16%</td>
+                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
+                </tr>
+                <tr>
+                    <td class="total-label-cell">IVA 16%</td>
+                    <td class="total-value-cell">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
+                </tr>
+                {% endif %}
+                {% if cfdi.pagos.totales.total_retenciones_iva %}
+                <tr>
+                    <td class="total-label-cell">Retención IVA</td>
+                    <td class="total-value-cell">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        <!-- Each Pago -->
+        {% for pago in cfdi.pagos.pago %}
+        <div class="pago-block">
+            <div class="pago-header">
+                <table class="fiscal-table">
+                    <tr>
+                        <td>
+                            <span class="fiscal-label">Fecha de Pago</span>
+                            <span class="fiscal-value">{{ format_date(pago.fecha_pago) }}</span>
+                        </td>
+                        <td>
+                            <span class="fiscal-label">Forma de Pago</span>
+                            <span class="fiscal-value">{{ get_forma_pago_p(pago.forma_de_pago_p) }}</span>
+                        </td>
+                        <td>
+                            <span class="fiscal-label">Moneda</span>
+                            <span class="fiscal-value">{{ get_moneda_pago(pago.moneda_p) }} ({{ pago.moneda_p }})</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="fiscal-label">Tipo de Cambio</span>
+                            <span class="fiscal-value">{{ format_number(pago.tipo_cambio_p, 6) }}</span>
+                        </td>
+                        <td>
+                            <span class="fiscal-label">Monto</span>
+                            <span class="fiscal-value">{{ format_currency(pago.monto, pago.moneda_p) }}</span>
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- DoctoRelacionado table -->
+            <div class="doctos-table-wrapper">
+                <div class="doctos-title">Documentos Relacionados</div>
+                <table class="conceptos-table">
+                    <thead>
+                        <tr>
+                            <th class="col-descripcion">UUID Documento</th>
+                            <th class="col-cantidad th-right">Moneda</th>
+                            <th class="col-cantidad th-right">Parcialidad</th>
+                            <th class="col-precio th-right">Saldo Anterior</th>
+                            <th class="col-precio th-right">Pagado</th>
+                            <th class="col-importe th-right">Saldo Insoluto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for docto in pago.docto_relacionado %}
+                        <tr class="{{ 'row-even' if loop.index is even else 'row-odd' }}">
+                            <td class="col-descripcion" style="font-size: 6.5pt;">{{ docto.id_documento }}</td>
+                            <td class="col-cantidad">{{ docto.moneda_dr }}</td>
+                            <td class="col-cantidad">{{ docto.num_parcialidad }}</td>
+                            <td class="col-precio">{{ format_currency(docto.imp_saldo_ant, docto.moneda_dr) }}</td>
+                            <td class="col-precio">{{ format_currency(docto.imp_pagado, docto.moneda_dr) }}</td>
+                            <td class="col-importe">{{ format_currency(docto.imp_saldo_insoluto, docto.moneda_dr) }}</td>
+                        </tr>
+                        {% if docto.impuestos_dr and (docto.impuestos_dr.traslados_dr or docto.impuestos_dr.retenciones_dr) %}
+                        <tr class="tax-detail-row">
+                            <td colspan="6" class="tax-detail-cell">
+                                {% if docto.impuestos_dr.traslados_dr %}
+                                <span class="tax-detail-label">Traslados DR:</span>
+                                {% for t in docto.impuestos_dr.traslados_dr %}
+                                <span class="tax-badge">{{ get_impuesto(t.impuesto_dr) }} base {{ format_currency(t.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(t.tasa_o_cuota_dr) }} = {{ format_currency(t.importe_dr, docto.moneda_dr) }}</span>
+                                {% endfor %}
+                                {% endif %}
+                                {% if docto.impuestos_dr.retenciones_dr %}
+                                <span class="tax-detail-label">Retenciones DR:</span>
+                                {% for r in docto.impuestos_dr.retenciones_dr %}
+                                <span class="tax-badge tax-badge-ret">{{ get_impuesto(r.impuesto_dr) }} base {{ format_currency(r.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(r.tasa_o_cuota_dr) }} = {{ format_currency(r.importe_dr, docto.moneda_dr) }}</span>
+                                {% endfor %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ImpuestosP -->
+            {% if pago.impuestos_p and (pago.impuestos_p.traslados_p or pago.impuestos_p.retenciones_p) %}
+            <div class="pago-impuestos">
+                <table class="totals-table" style="margin-top: 4px;">
+                    {% if pago.impuestos_p.traslados_p %}
+                    {% for t in pago.impuestos_p.traslados_p %}
+                    <tr>
+                        <td class="total-label-cell">Traslado {{ get_impuesto(t.impuesto_p) }} {{ format_tax_rate(t.tasa_o_cuota_p) }}</td>
+                        <td class="total-value-cell">{{ format_currency(t.importe_p, pago.moneda_p) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                    {% if pago.impuestos_p.retenciones_p %}
+                    {% for r in pago.impuestos_p.retenciones_p %}
+                    <tr>
+                        <td class="total-label-cell">Retención {{ get_impuesto(r.impuesto_p) }}</td>
+                        <td class="total-value-cell">-{{ format_currency(r.importe_p, pago.moneda_p) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ═══════════════════════════════════════════════════════════════
          TOTALES — tabla a la derecha
          ═══════════════════════════════════════════════════════════════ -->
     <section class="totals-section">

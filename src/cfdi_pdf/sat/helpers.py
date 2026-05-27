@@ -37,7 +37,7 @@ class SATHelpers:
             cfdi.lugar_expedicion,
         ]
 
-        return "||" + "|".join(parts) + "||"
+        return "||" + "|".join(part or "" for part in parts) + "||"
 
     @staticmethod
     def format_sello(sello: str, chunk_size: int = 64) -> str:

@@ -128,6 +128,8 @@ class RenderEngine:
             "format_date": self._formatters.format_date,
             "get_impuesto": self._catalogs.get_impuesto,
             "get_objeto_impuesto": self._catalogs.get_objeto_impuesto,
+            "get_forma_pago_p": self._catalogs.get_forma_pago_p,
+            "get_moneda_pago": self._catalogs.get_moneda,
             "moneda": cfdi.moneda,
         }
 
@@ -192,8 +194,12 @@ class RenderEngine:
                 cfdi.receptor.regimen_fiscal
             ),
             "uso_cfdi": self._catalogs.get_uso_cfdi(cfdi.receptor.uso_cfdi),
-            "forma_pago": self._catalogs.get_forma_pago(cfdi.forma_pago),
-            "metodo_pago": self._catalogs.get_metodo_pago(cfdi.metodo_pago),
+            "forma_pago": self._catalogs.get_forma_pago(cfdi.forma_pago)
+            if cfdi.forma_pago
+            else "N/A (Complemento de Pago)",
+            "metodo_pago": self._catalogs.get_metodo_pago(cfdi.metodo_pago)
+            if cfdi.metodo_pago
+            else "N/A (Complemento de Pago)",
             "tipo_comprobante": self._catalogs.get_tipo_comprobante(cfdi.tipo_comprobante),
             "exportacion": self._catalogs.get_exportacion(cfdi.exportacion),
             "moneda": self._catalogs.get_moneda(cfdi.moneda),

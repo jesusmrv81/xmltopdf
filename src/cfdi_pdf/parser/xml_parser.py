@@ -10,13 +10,23 @@ from ..exceptions import InvalidCFDIError, XMLParseError
 from ..models import (
     CFDI,
     Concepto,
+    DoctoRelacionado,
     Emisor,
     ImpuestosComprobante,
     ImpuestosConcepto,
+    ImpuestosDR,
+    ImpuestosP,
+    Pago,
+    Pagos,
     Receptor,
     Retencion,
+    RetencionDR,
+    RetencionP,
     TimbreFiscalDigital,
+    Totales,
     Traslado,
+    TrasladoDR,
+    TrasladoP,
 )
 from .sanitizer import XMLSanitizer
 
@@ -25,6 +35,7 @@ logger = logging.getLogger(__name__)
 # CFDI 4.0 namespaces
 CFDI_NS = "http://www.sat.gob.mx/cfd/4"
 TFD_NS = "http://www.sat.gob.mx/TimbreFiscalDigital"
+PAGOS20_NS = "http://www.sat.gob.mx/Pagos20"
 
 NAMESPACES = {
     "cfdi": CFDI_NS,
@@ -125,8 +136,8 @@ class CFDIParser:
             serie=self._get_optional_attr(root, "Serie"),
             folio=self._get_optional_attr(root, "Folio"),
             fecha=self._get_attr(root, "Fecha"),
-            forma_pago=self._get_attr(root, "FormaPago"),
-            metodo_pago=self._get_attr(root, "MetodoPago"),
+            forma_pago=self._get_optional_attr(root, "FormaPago"),
+            metodo_pago=self._get_optional_attr(root, "MetodoPago"),
             condiciones_pago=self._get_optional_attr(root, "CondicionesDePago"),
             sub_total=self._get_decimal(root, "SubTotal"),
             descuento=self._get_optional_decimal(root, "Descuento"),
@@ -144,6 +155,7 @@ class CFDIParser:
             conceptos=self._parse_conceptos(root),
             impuestos=self._parse_impuestos_comprobante(root),
             timbre_fiscal=self._parse_timbre_fiscal(root),
+            pagos=self._parse_pagos(root),
             complementos=self._parse_complementos(root),
         )
 
@@ -330,6 +342,169 @@ class CFDIParser:
         ]
         return "||" + "|".join(parts) + "||"
 
+    def _parse_pagos(self, root: etree._Element) -> Pagos | None:
+        """Parse Complemento de Pago 2.0 from Complemento."""
+        complemento_elem = root.find(f"{{{CFDI_NS}}}Complemento")
+        if complemento_elem is None:
+            return None
+
+        pagos_elem = complemento_elem.find(f"{{{PAGOS20_NS}}}Pagos")
+        if pagos_elem is None:
+            return None
+
+        # Helper: parse ImpuestosDR (RetencionesDR + TrasladosDR)
+        def _parse_impuestos_dr(
+            docto_elem: etree._Element,
+        ) -> ImpuestosDR | None:
+            impuestos_elem = docto_elem.find(f"{{{PAGOS20_NS}}}ImpuestosDR")
+            if impuestos_elem is None:
+                return None
+
+            retenciones: list[RetencionDR] = []
+            traslados: list[TrasladoDR] = []
+
+            ret_elem = impuestos_elem.find(f"{{{PAGOS20_NS}}}RetencionesDR")
+            if ret_elem is not None:
+                for r in ret_elem.findall(f"{{{PAGOS20_NS}}}RetencionDR"):
+                    retenciones.append(
+                        RetencionDR(
+                            BaseDR=self._get_decimal(r, "BaseDR"),
+                            ImpuestoDR=self._get_attr(r, "ImpuestoDR"),
+                            TipoFactorDR=self._get_attr(r, "TipoFactorDR"),
+                            TasaOCuotaDR=self._get_decimal(r, "TasaOCuotaDR"),
+                            ImporteDR=self._get_decimal(r, "ImporteDR"),
+                        )
+                    )
+
+            tr_elem = impuestos_elem.find(f"{{{PAGOS20_NS}}}TrasladosDR")
+            if tr_elem is not None:
+                for t in tr_elem.findall(f"{{{PAGOS20_NS}}}TrasladoDR"):
+                    traslados.append(
+                        TrasladoDR(
+                            BaseDR=self._get_decimal(t, "BaseDR"),
+                            ImpuestoDR=self._get_attr(t, "ImpuestoDR"),
+                            TipoFactorDR=self._get_attr(t, "TipoFactorDR"),
+                            TasaOCuotaDR=self._get_decimal(t, "TasaOCuotaDR"),
+                            ImporteDR=self._get_decimal(t, "ImporteDR"),
+                        )
+                    )
+
+            return ImpuestosDR(RetencionesDR=retenciones, TrasladosDR=traslados)
+
+        # Helper: parse ImpuestosP (RetencionesP + TrasladosP)
+        def _parse_impuestos_p(pago_elem: etree._Element) -> ImpuestosP | None:
+            impuestos_elem = pago_elem.find(f"{{{PAGOS20_NS}}}ImpuestosP")
+            if impuestos_elem is None:
+                return None
+
+            retenciones: list[RetencionP] = []
+            traslados: list[TrasladoP] = []
+
+            ret_elem = impuestos_elem.find(f"{{{PAGOS20_NS}}}RetencionesP")
+            if ret_elem is not None:
+                for r in ret_elem.findall(f"{{{PAGOS20_NS}}}RetencionP"):
+                    retenciones.append(
+                        RetencionP(
+                            ImpuestoP=self._get_attr(r, "ImpuestoP"),
+                            ImporteP=self._get_decimal(r, "ImporteP"),
+                        )
+                    )
+
+            tr_elem = impuestos_elem.find(f"{{{PAGOS20_NS}}}TrasladosP")
+            if tr_elem is not None:
+                for t in tr_elem.findall(f"{{{PAGOS20_NS}}}TrasladoP"):
+                    traslados.append(
+                        TrasladoP(
+                            BaseP=self._get_decimal(t, "BaseP"),
+                            ImpuestoP=self._get_attr(t, "ImpuestoP"),
+                            TipoFactorP=self._get_attr(t, "TipoFactorP"),
+                            TasaOCuotaP=self._get_decimal(t, "TasaOCuotaP"),
+                            ImporteP=self._get_decimal(t, "ImporteP"),
+                        )
+                    )
+
+            return ImpuestosP(RetencionesP=retenciones, TrasladosP=traslados)
+
+        # Parse Totales
+        totales_elem = pagos_elem.find(f"{{{PAGOS20_NS}}}Totales")
+        if totales_elem is None:
+            return None
+
+        totales = Totales(
+            MontoTotalPagos=self._get_decimal(totales_elem, "MontoTotalPagos"),
+            TotalRetencionesIVA=self._get_optional_decimal(totales_elem, "TotalRetencionesIVA"),
+            TotalRetencionesISR=self._get_optional_decimal(totales_elem, "TotalRetencionesISR"),
+            TotalRetencionesIEPS=self._get_optional_decimal(totales_elem, "TotalRetencionesIEPS"),
+            TotalTrasladosBaseIVA16=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosBaseIVA16"
+            ),
+            TotalTrasladosImpuestoIVA16=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosImpuestoIVA16"
+            ),
+            TotalTrasladosBaseIVA8=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosBaseIVA8"
+            ),
+            TotalTrasladosImpuestoIVA8=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosImpuestoIVA8"
+            ),
+            TotalTrasladosBaseIVA0=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosBaseIVA0"
+            ),
+            TotalTrasladosImpuestoIVA0=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosImpuestoIVA0"
+            ),
+            TotalTrasladosBaseIVAFrontera=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosBaseIVAFrontera"
+            ),
+            TotalTrasladosImpuestoIVAFrontera=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosImpuestoIVAFrontera"
+            ),
+            TotalTrasladosBaseExento=self._get_optional_decimal(
+                totales_elem, "TotalTrasladosBaseExento"
+            ),
+        )
+
+        # Parse each Pago
+        pagos_list: list[Pago] = []
+        for pago_elem in pagos_elem.findall(f"{{{PAGOS20_NS}}}Pago"):
+            doctos = []
+            for doc_elem in pago_elem.findall(f"{{{PAGOS20_NS}}}DoctoRelacionado"):
+                doctos.append(
+                    DoctoRelacionado(
+                        IdDocumento=self._get_attr(doc_elem, "IdDocumento"),
+                        MonedaDR=self._get_attr(doc_elem, "MonedaDR"),
+                        EquivalenciaDR=self._get_decimal(doc_elem, "EquivalenciaDR"),
+                        NumParcialidad=int(self._get_attr(doc_elem, "NumParcialidad")),
+                        ImpSaldoAnt=self._get_decimal(doc_elem, "ImpSaldoAnt"),
+                        ImpPagado=self._get_decimal(doc_elem, "ImpPagado"),
+                        ImpSaldoInsoluto=self._get_decimal(doc_elem, "ImpSaldoInsoluto"),
+                        ObjetoImpDR=self._get_attr(doc_elem, "ObjetoImpDR"),
+                        ImpuestosDR=_parse_impuestos_dr(doc_elem),
+                    )
+                )
+
+            pagos_list.append(
+                Pago(
+                    FechaPago=self._get_attr(pago_elem, "FechaPago"),
+                    FormaDePagoP=self._get_attr(pago_elem, "FormaDePagoP"),
+                    MonedaP=self._get_attr(pago_elem, "MonedaP"),
+                    TipoCambioP=self._get_decimal(pago_elem, "TipoCambioP"),
+                    Monto=self._get_decimal(pago_elem, "Monto"),
+                    NumOperacion=self._get_optional_attr(pago_elem, "NumOperacion"),
+                    RfcEmisorCtaOrd=self._get_optional_attr(pago_elem, "RfcEmisorCtaOrd"),
+                    RfcEmisorCtaBen=self._get_optional_attr(pago_elem, "RfcEmisorCtaBen"),
+                    DoctoRelacionado=doctos,
+                    ImpuestosP=_parse_impuestos_p(pago_elem),
+                )
+            )
+
+        logger.info("Parsed Complemento de Pago 2.0 with %d payment(s)", len(pagos_list))
+        return Pagos(
+            version=self._get_attr(pagos_elem, "Version"),
+            Totales=totales,
+            Pago=pagos_list,
+        )
+
     def _parse_complementos(self, root: etree._Element) -> dict[str, dict[str, object]]:
         """Parse additional complementos (Carta Porte, Pagos, Nómina, etc.)."""
         complemento_elem = root.find(f"{{{CFDI_NS}}}Complemento")
@@ -339,7 +514,7 @@ class CFDIParser:
         complementos: dict[str, dict[str, object]] = {}
 
         for child in complemento_elem:
-            if child.tag.endswith("}TimbreFiscalDigital"):
+            if child.tag.endswith("}TimbreFiscalDigital") or child.tag.endswith("}Pagos"):
                 continue
 
             tag = child.tag
