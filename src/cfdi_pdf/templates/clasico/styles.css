@@ -1,0 +1,648 @@
+/*
+ * CFDI PDF - Template "clasico"
+ * Diseño tradicional fiscal mexicano. Blanco/negro con bordes sólidos.
+ * Máxima compatibilidad con todos los motores PDF, incluyendo wkhtmltopdf.
+ *
+ * COMPATIBILIDAD CSS:
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Motor            Soporte    Notas
+ * WeasyPrint       ✓ Completo  v60+ soporta todas las propiedades usadas aquí
+ * Chromium print   ✓ Completo  Sin restricciones para este CSS
+ * wkhtmltopdf      ✓ Bueno     Layout 100% con tablas HTML; sin grid ni flexbox
+ *
+ * DECISIONES DE DISEÑO PARA COMPATIBILIDAD:
+ * - Todo el layout se basa exclusivamente en <table> HTML
+ * - Cero uso de display:flex o display:grid
+ * - Sin border-radius (wkhtmltopdf los ignora en algunas versiones)
+ * - Sin CSS variables (--custom-prop) → no soportadas en wkhtmltopdf
+ * - Sin :nth-child() en cuerpo de tabla → zebra via clases .row-odd/.row-even
+ * - Sin gradientes (background: linear-gradient) → no fiables en wkhtmltopdf
+ * - Colores sólidos únicamente
+ * - Fuentes: "Times New Roman" como primera opción (disponible en todos los OS
+ *   usados por motores PDF)
+ *
+ * PROPIEDADES EXPLICITAMENTE EVITADAS:
+ * - display: flex / grid / subgrid
+ * - CSS variables (--var)
+ * - border-radius
+ * - background: linear-gradient / radial-gradient
+ * - :has(), :is(), :where()
+ * - container queries (@container)
+ * - @layer
+ * - aspect-ratio
+ * - gap (propiedad standalone)
+ * - object-fit / object-position
+ * - backdrop-filter / filter
+ * - clip-path
+ * - animation / transition
+ * - CSS Grid areas
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* ── Página ─────────────────────────────────────────────────────────────── */
+@page {
+    size: letter;          /* 8.5 × 11 in — tamaño carta México */
+    margin: 15mm 15mm 20mm 15mm;
+}
+
+/* ── Reset básico ───────────────────────────────────────────────────────── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /*
+     * "Times New Roman" es la fuente fiscal clásica disponible en todos los
+     * sistemas operativos y motores PDF, incluyendo WeasyPrint con fontconfig.
+     * Fallback: Georgia, serif
+     */
+    font-family: "Times New Roman", Georgia, "Liberation Serif", serif;
+    font-size: 9pt;
+    line-height: 1.4;
+    color: #000000;
+    background: #ffffff;
+}
+
+.container {
+    max-width: 180mm;
+    margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENCABEZADO — tabla HTML, sin flexbox ni grid
+   ═══════════════════════════════════════════════════════════════════════════ */
+.header {
+    width: 100%;
+    border: 2px solid #000000;
+    margin-bottom: 6px;
+}
+
+.header-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.header-logo-cell {
+    width: 130px;
+    padding: 10px;
+    vertical-align: middle;
+    border-right: 1px solid #000000;
+}
+
+.header-company-cell {
+    padding: 10px 12px;
+    vertical-align: middle;
+    border-right: 1px solid #000000;
+}
+
+.header-doc-cell {
+    width: 150px;
+    padding: 10px;
+    vertical-align: top;
+    text-align: center;
+}
+
+.logo {
+    max-width: 120px;
+    max-height: 55px;
+    /* object-fit omitido — no soportado en wkhtmltopdf */
+}
+
+.logo-placeholder {
+    width: 80px;
+    height: 50px;
+    border: 1px solid #999999;
+    background: #f0f0f0;
+}
+
+.company-name {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #000000;
+    margin-bottom: 3px;
+}
+
+.company-rfc {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    font-weight: bold;
+    color: #000000;
+    margin-bottom: 2px;
+}
+
+.company-regimen {
+    font-size: 7.5pt;
+    color: #333333;
+}
+
+.company-cert {
+    font-size: 7.5pt;
+    color: #333333;
+    margin-top: 2px;
+}
+
+/* Caja de tipo de documento — borde doble clásico */
+.doc-type-box {
+    border: 2px solid #000000;
+    padding: 6px 4px;
+    margin-bottom: 6px;
+}
+
+.doc-type-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    color: #333333;
+    font-weight: bold;
+    display: block;
+}
+
+.doc-type-value {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #000000;
+}
+
+.doc-series-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+}
+
+.doc-series-table td {
+    padding: 2px 3px;
+    border: 1px solid #000000;
+    text-align: center;
+}
+
+.doc-series-label {
+    font-size: 6.5pt;
+    font-weight: bold;
+    background: #e8e8e8;
+    display: block;
+}
+
+.doc-series-value {
+    font-size: 9pt;
+    font-weight: bold;
+    display: block;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DATOS FISCALES — tabla con borde completo
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fiscal-section {
+    width: 100%;
+    border: 1px solid #000000;
+    border-top: 2px solid #000000;
+    margin-bottom: 6px;
+}
+
+.fiscal-section-title {
+    background: #000000;
+    color: #ffffff;
+    font-size: 7.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    letter-spacing: 0.3px;
+}
+
+.fiscal-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.fiscal-table td {
+    padding: 4px 8px;
+    border-right: 1px solid #cccccc;
+    border-bottom: 1px solid #cccccc;
+    width: 33.33%;
+    vertical-align: top;
+}
+
+.fiscal-table td:last-child {
+    border-right: none;
+}
+
+.fiscal-table tr:last-child td {
+    border-bottom: none;
+}
+
+.fiscal-label {
+    font-size: 6.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #555555;
+    display: block;
+    margin-bottom: 1px;
+}
+
+.fiscal-value {
+    font-size: 8.5pt;
+    color: #000000;
+    font-weight: bold;
+}
+
+.fiscal-uuid-value {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 7pt;
+    font-weight: bold;
+    word-break: break-all;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMISOR Y RECEPTOR — tabla de 2 columnas
+   ═══════════════════════════════════════════════════════════════════════════ */
+.parties-section {
+    margin-bottom: 6px;
+}
+
+.parties-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000000;
+}
+
+.party-cell {
+    width: 50%;
+    vertical-align: top;
+    padding: 8px;
+    border-right: 1px solid #000000;
+}
+
+.party-cell-right {
+    border-right: none;
+}
+
+.party-heading {
+    font-size: 7pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    background: #000000;
+    color: #ffffff;
+    padding: 2px 6px;
+    margin-bottom: 5px;
+    display: block;
+    letter-spacing: 0.3px;
+}
+
+.party-name {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #000000;
+    margin-bottom: 2px;
+}
+
+.party-rfc {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    font-weight: bold;
+    color: #000000;
+    margin-bottom: 4px;
+}
+
+.party-detail {
+    font-size: 7.5pt;
+    color: #333333;
+    margin-bottom: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLA DE CONCEPTOS — estructura clásica fiscal
+   ═══════════════════════════════════════════════════════════════════════════ */
+.conceptos-section {
+    margin-bottom: 0;
+    border: 1px solid #000000;
+}
+
+.section-title {
+    background: #000000;
+    color: #ffffff;
+    font-size: 7.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    letter-spacing: 0.3px;
+}
+
+.conceptos-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+}
+
+.conceptos-table thead tr {
+    background: #e8e8e8;
+    border-bottom: 2px solid #000000;
+}
+
+.conceptos-table th {
+    padding: 5px 6px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    color: #000000;
+    border-right: 1px solid #999999;
+}
+
+.conceptos-table th:last-child {
+    border-right: none;
+}
+
+.conceptos-table td {
+    padding: 5px 6px;
+    border-bottom: 1px solid #cccccc;
+    border-right: 1px solid #cccccc;
+    vertical-align: top;
+    color: #000000;
+}
+
+.conceptos-table td:last-child {
+    border-right: none;
+}
+
+.conceptos-table tbody tr:last-child td {
+    border-bottom: 2px solid #000000;
+}
+
+/* Zebra striping con clases explícitas — compatible con wkhtmltopdf */
+.conceptos-table tbody tr.row-odd {
+    background: #ffffff;
+}
+
+.conceptos-table tbody tr.row-even {
+    background: #f5f5f5;
+}
+
+.col-cantidad {
+    width: 8%;
+    text-align: right;
+}
+
+.col-unidad {
+    width: 8%;
+}
+
+.col-clave-sat {
+    width: 10%;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 7.5pt;
+}
+
+.col-descripcion {
+    width: 40%;
+}
+
+.col-precio {
+    width: 17%;
+    text-align: right;
+    font-family: "Courier New", Courier, monospace;
+}
+
+.col-importe {
+    width: 17%;
+    text-align: right;
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+}
+
+.th-right {
+    text-align: right;
+}
+
+.tax-info {
+    margin-top: 3px;
+}
+
+.tax-badge {
+    /*
+     * display: inline-block → soportado universalmente
+     * Sin border-radius → wkhtmltopdf no lo soporta de forma consistente
+     */
+    display: inline-block;
+    border: 1px solid #999999;
+    background: #f0f0f0;
+    color: #000000;
+    font-size: 6.5pt;
+    padding: 0 4px;
+    font-weight: bold;
+    margin-right: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOTALES — tabla alineada a la derecha
+   ═══════════════════════════════════════════════════════════════════════════ */
+.totals-section {
+    margin-bottom: 6px;
+    text-align: right;
+}
+
+.totals-table {
+    margin-left: auto;
+    width: 260px;
+    border-collapse: collapse;
+    border: 1px solid #000000;
+}
+
+.totals-table td {
+    padding: 4px 8px;
+    font-size: 8.5pt;
+    border-bottom: 1px solid #cccccc;
+}
+
+.totals-table tr:last-child td {
+    border-bottom: none;
+}
+
+.total-label-cell {
+    text-align: left;
+    color: #333333;
+    border-right: 1px solid #999999;
+}
+
+.total-value-cell {
+    text-align: right;
+    font-family: "Courier New", Courier, monospace;
+    color: #000000;
+    font-weight: bold;
+}
+
+.total-final-row td {
+    border-top: 2px solid #000000;
+    background: #e8e8e8;
+}
+
+.total-final-label {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #000000;
+}
+
+.total-final-value {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #000000;
+    font-family: "Courier New", Courier, monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIMBRE FISCAL DIGITAL — tabla 2 columnas
+   ═══════════════════════════════════════════════════════════════════════════ */
+.timbre-section {
+    border: 1px solid #000000;
+    margin-bottom: 6px;
+}
+
+.timbre-inner-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.timbre-qr-cell {
+    width: 130px;
+    vertical-align: middle;
+    text-align: center;
+    padding: 10px 8px;
+    border-right: 1px solid #000000;
+    background: #f5f5f5;
+}
+
+.timbre-data-cell {
+    vertical-align: top;
+    padding: 8px 12px;
+}
+
+.qr-image {
+    width: 110px;
+    height: 110px;
+    display: block;
+    margin: 0 auto;
+}
+
+.qr-placeholder {
+    width: 110px;
+    height: 110px;
+    background: #dddddd;
+    border: 1px solid #999999;
+    display: block;
+    margin: 0 auto;
+}
+
+.qr-caption {
+    font-size: 6pt;
+    color: #555555;
+    margin-top: 4px;
+    text-align: center;
+}
+
+.timbre-heading {
+    font-size: 7.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #000000;
+    margin-bottom: 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #999999;
+}
+
+.timbre-row-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.5pt;
+}
+
+.timbre-row-table td {
+    padding: 2px 0;
+    vertical-align: top;
+}
+
+.tfd-label {
+    width: 170px;
+    color: #333333;
+    font-weight: bold;
+    padding-right: 6px;
+}
+
+.tfd-value {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 7pt;
+    color: #000000;
+    word-break: break-all;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELLOS DIGITALES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sellos-section {
+    border: 1px solid #000000;
+    margin-bottom: 6px;
+}
+
+.sellos-inner {
+    padding: 6px 8px;
+}
+
+.sello-block {
+    margin-bottom: 6px;
+}
+
+.sello-label {
+    font-size: 6.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #333333;
+    margin-bottom: 2px;
+}
+
+.sello-value {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 5.5pt;
+    color: #000000;
+    background: #f5f5f5;
+    border: 1px solid #cccccc;
+    padding: 4px 6px;
+    word-break: break-all;
+    line-height: 1.5;
+}
+
+.cadena-original {
+    font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LEYENDAS FISCALES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.leyendas {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #000000;
+}
+
+.leyenda {
+    font-size: 7pt;
+    color: #555555;
+    line-height: 1.5;
+    margin-bottom: 2px;
+    text-align: center;
+}
+
+.leyenda a {
+    color: #000000;
+    text-decoration: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OPTIMIZACIONES DE IMPRESIÓN
+   Ambas propiedades declaradas para cobertura máxima:
+   - -webkit-print-color-adjust → Chromium / wkhtmltopdf
+   - print-color-adjust          → W3C estándar / WeasyPrint / Firefox
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

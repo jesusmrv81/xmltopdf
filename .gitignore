@@ -30,9 +30,13 @@ ENV/
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 *.cover
 .hypothesis/
+coverage.xml
+nosetests.xml
+test-results/
 
 # IDE
 .vscode/
@@ -40,9 +44,15 @@ htmlcov/
 *.swp
 *.swo
 *~
+*.iml
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # Build
@@ -55,3 +65,30 @@ Thumbs.db
 # Temporary
 .tmp/
 temp/
+
+# AI / editor tooling
+.opencode/
+.commandcode/
+.comma*/
+
+# Generated output — PDFs and test XMLs should never be committed
+*.pdf
+# Only ignore loose XML files at root; fixtures under tests/ are tracked
+/*.xml
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff / linting caches
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Distribution / packaging
+pip-wheel-metadata/
+share/python-wheels/
+MANIFEST

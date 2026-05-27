@@ -8,28 +8,26 @@ from pathlib import Path
 from .api import CFDIPDF
 from .exceptions import CFDIPDFError
 
+logger = logging.getLogger(__name__)
+
 
 def setup_logging(verbose: bool = False) -> None:
     """Configure logging."""
-    # Create a handler for console output
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-    
+
     if verbose:
-        # In verbose mode, show everything
         logging.root.setLevel(logging.DEBUG)
         console_handler.setLevel(logging.DEBUG)
     else:
-        # In normal mode, silence root logger (used by dependencies)
         logging.root.setLevel(logging.WARNING)
         console_handler.setLevel(logging.WARNING)
-        
-        # But show our app's INFO messages
+
         app_logger = logging.getLogger("cfdi_pdf")
         app_logger.setLevel(logging.INFO)
         app_logger.addHandler(console_handler)
         app_logger.propagate = False
-    
+
     logging.root.addHandler(console_handler)
 
 
@@ -37,14 +35,22 @@ def main() -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         prog="cfdi-pdf",
-        description="Convert CFDI 4.0 XML files to PDF",
+        description="Convierte archivos CFDI 4.0 XML a PDF (tamaño carta). "
+                    "El PDF generado siempre se nombra con el UUID del timbre fiscal.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  cfdi-pdf factura.xml factura.pdf
-  cfdi-pdf factura.xml --template minimal
-  cfdi-pdf *.xml --output-dir ./pdfs
-  cfdi-pdf factura.xml --logo logo.png
+Ejemplos:
+  # Un archivo — guarda {uuid}.pdf en el mismo directorio que el XML
+  cfdi-pdf factura.xml
+
+  # Varios archivos
+  cfdi-pdf enero/*.xml
+
+  # Directorio de salida personalizado
+  cfdi-pdf factura.xml --output-dir ./pdfs
+
+  # Con logo y template
+  cfdi-pdf factura.xml --template corporativo --logo logo.png
         """,
     )
 
@@ -52,41 +58,43 @@ Examples:
         "files",
         nargs="+",
         type=Path,
-        help="CFDI XML file(s) to convert, optionally followed by output PDF path",
+        metavar="XML",
+        help="Archivo(s) CFDI XML a convertir",
     )
 
     parser.add_argument(
         "-t",
         "--template",
         default="minimal",
-        help="Template name (default: minimal)",
+        help="Nombre del template (default: minimal)",
     )
 
     parser.add_argument(
         "-l",
         "--logo",
         type=Path,
-        help="Path to logo image",
+        help="Ruta a imagen de logotipo (PNG, JPG o SVG)",
     )
 
     parser.add_argument(
         "-o",
         "--output-dir",
         type=Path,
-        help="Output directory for batch conversion",
+        help="Directorio donde se guardarán los PDFs. "
+             "Por defecto se usa el mismo directorio del XML.",
     )
 
     parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
-        help="Enable verbose output",
+        help="Activar salida detallada",
     )
 
     parser.add_argument(
         "--list-templates",
         action="store_true",
-        help="List available templates",
+        help="Listar templates disponibles y salir",
     )
 
     parser.add_argument(
@@ -96,83 +104,48 @@ Examples:
     )
 
     args = parser.parse_args()
-
     setup_logging(args.verbose)
 
-    # Handle --list-templates
+    # ── --list-templates ──────────────────────────────────────────────────────
     if args.list_templates:
         converter = CFDIPDF()
-        templates = converter.list_templates()
-        print("Available templates:")
-        for template in templates:
-            print(f"  - {template}")
+        print("Templates disponibles:")
+        for tmpl in converter.list_templates():
+            print(f"  - {tmpl}")
         return 0
 
-    # Separate XML files from output PDF
-    # If last file is .pdf, treat it as output
-    all_files = args.files
-    output_path = None
-    
-    if len(all_files) > 1 and all_files[-1].suffix.lower() == ".pdf":
-        output_path = all_files[-1]
-        xml_files = all_files[:-1]
-    else:
-        xml_files = all_files
-    
-    if not xml_files:
-        parser.error("At least one XML file is required")
+    xml_files: list[Path] = args.files
 
-    # Validate arguments
-    if len(xml_files) > 1 and not args.output_dir and output_path:
-        parser.error("For multiple files, use --output-dir instead of specifying a single PDF output")
-
-    # Determine output mode
-    single_file = len(xml_files) == 1 and not args.output_dir
-    output_dir = args.output_dir or (output_path if output_path and output_path.is_dir() else None)
-
-    # Initialize converter
+    # ── initialize converter ──────────────────────────────────────────────────
     try:
         converter = CFDIPDF(template=args.template)
-    except Exception as e:
-        logging.error(f"Failed to initialize converter: {e}")
+    except Exception as exc:
+        logger.error("No se pudo inicializar el convertidor: %s", exc)
         return 1
 
-    # Process files
+    # ── process files ─────────────────────────────────────────────────────────
     success_count = 0
     error_count = 0
 
     for xml_file in xml_files:
         try:
-            # Determine output path
-            if single_file and output_path and not output_path.is_dir():
-                final_output_path = output_path
-            elif output_dir:
-                output_dir.mkdir(parents=True, exist_ok=True)
-                final_output_path = output_dir / f"{xml_file.stem}.pdf"
-            else:
-                final_output_path = xml_file.with_suffix(".pdf")
-
-            # Convert
-            logging.info(f"Converting: {xml_file} -> {final_output_path}")
-            converter.render(
+            output_path = converter.render(
                 xml_path=xml_file,
-                output=final_output_path,
+                output_dir=args.output_dir,
                 logo_path=args.logo,
             )
-
-            print(f"✓ {xml_file.name} -> {final_output_path.name}")
+            print(f"✓ {xml_file.name} → {output_path}")
             success_count += 1
 
-        except CFDIPDFError as e:
-            logging.error(f"Failed to convert {xml_file}: {e}")
+        except CFDIPDFError as exc:
+            logger.error("Error al convertir %s: %s", xml_file, exc)
             error_count += 1
-        except Exception as e:
-            logging.error(f"Unexpected error converting {xml_file}: {e}")
+        except Exception as exc:
+            logger.error("Error inesperado al convertir %s: %s", xml_file, exc)
             error_count += 1
 
-    # Summary
     if len(xml_files) > 1:
-        print(f"\nConverted: {success_count}, Failed: {error_count}")
+        print(f"\nConvertidos: {success_count}  Fallidos: {error_count}")
 
     return 0 if error_count == 0 else 1
 

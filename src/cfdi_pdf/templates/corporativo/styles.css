@@ -1,0 +1,608 @@
+/*
+ * CFDI PDF - Template "corporativo"
+ * Diseño profesional con encabezado de color, tabla detallada y sección de timbre estructurada.
+ *
+ * COMPATIBILIDAD CSS:
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Motor            Soporte    Notas
+ * WeasyPrint       ✓ Completo  v60+ soporta @page, grid, flexbox, border-radius
+ * Chromium print   ✓ Completo  Sin restricciones relevantes
+ * wkhtmltopdf      ~ Parcial   No soporta CSS Grid (se usa tabla HTML como fallback)
+ *                              No soporta display:flex totalmente (se usan tablas)
+ *
+ * PROPIEDADES USADAS Y SU SOPORTE:
+ * - @page / @page size           → soportado en los 3 motores
+ * - display: table / table-cell  → fallback universal, soportado en todos
+ * - display: flex                → WeasyPrint ≥60, Chromium; wkhtmltopdf parcial
+ *   FALLBACK aplicado: secciones críticas de layout usan "display: table" en lugar
+ *   de flex puro, garantizando compatibilidad con wkhtmltopdf
+ * - border-radius                → WeasyPrint ≥53, Chromium; wkhtmltopdf parcial
+ *   FALLBACK: elementos sin border-radius en zonas fiscales críticas
+ * - CSS Grid (display: grid)     → WeasyPrint ≥60, Chromium; NO en wkhtmltopdf
+ *   FALLBACK: secciones de 2 columnas usan <table> en el HTML
+ * - word-break: break-all        → soportado en los 3 motores
+ * - print-color-adjust           → estándar W3C; -webkit-print-color-adjust como alias
+ * - object-fit                   → WeasyPrint ≥60, Chromium; NO en wkhtmltopdf (ignorado)
+ * - letter-spacing               → soportado en los 3 motores
+ * - text-transform               → soportado en los 3 motores
+ *
+ * PROPIEDADES EXPLICITAMENTE EVITADAS (experimentales/no soportadas en PDF):
+ * - CSS Subgrid               → solo Chrome 117+ / FF 71+; no en WeasyPrint ni wkhtmltopdf
+ * - container queries         → no soportado en ningún motor PDF
+ * - :has() selector           → no soportado en WeasyPrint ni wkhtmltopdf
+ * - CSS layers (@layer)       → no soportado en motores PDF
+ * - aspect-ratio              → no soportado en wkhtmltopdf; evitado
+ * - gap en flexbox            → WeasyPrint ≥60 sí; wkhtmltopdf no; se usa margin como fallback
+ * - backdrop-filter           → no soportado en ningún motor PDF
+ * - clip-path                 → no soportado en wkhtmltopdf
+ * - CSS variables (--var)     → no soportado en wkhtmltopdf; evitado en favor de valores directos
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+/* ── Página ─────────────────────────────────────────────────────────────── */
+@page {
+    size: letter;          /* 8.5 × 11 in — tamaño carta México */
+    margin: 12mm 14mm 18mm 14mm;
+}
+
+/* ── Reset básico ───────────────────────────────────────────────────────── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /*
+     * Stack de fuentes seguro para PDF:
+     * - "Helvetica Neue" / Arial → disponibles en la mayoría de sistemas
+     * - sans-serif               → fallback garantizado
+     * EVITADO: -apple-system, BlinkMacSystemFont → no resuelven en WeasyPrint/wkhtmltopdf
+     */
+    font-family: "Helvetica Neue", Arial, "Liberation Sans", sans-serif;
+    font-size: 9pt;
+    line-height: 1.4;
+    color: #1a1a2e;
+    background: #ffffff;
+}
+
+.container {
+    max-width: 182mm; /* A4 - márgenes */
+    margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENCABEZADO CORPORATIVO
+   Layout: tabla HTML para compatibilidad wkhtmltopdf
+   ═══════════════════════════════════════════════════════════════════════════ */
+.header {
+    width: 100%;
+    border-bottom: 3px solid #1a3a5c;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+}
+
+/* Tabla de encabezado — fallback universal para wkhtmltopdf */
+.header-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.header-logo-cell {
+    width: 140px;
+    vertical-align: middle;
+    padding-right: 12px;
+}
+
+.header-company-cell {
+    vertical-align: middle;
+    padding-right: 12px;
+}
+
+.header-doc-cell {
+    width: 160px;
+    vertical-align: top;
+    text-align: right;
+}
+
+.logo {
+    max-width: 130px;
+    max-height: 55px;
+    /* object-fit: contain; — NO soportado en wkhtmltopdf; omitido intencionalmente */
+}
+
+.logo-placeholder {
+    width: 80px;
+    height: 50px;
+    background: #e8edf3;
+    border: 1px solid #c5cdd8;
+    /* border-radius omitido — inconsistente en wkhtmltopdf */
+}
+
+.company-name {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #1a3a5c;
+    margin-bottom: 2px;
+}
+
+.company-rfc {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    color: #2d5f8a;
+    font-weight: bold;
+}
+
+.company-regimen {
+    font-size: 7.5pt;
+    color: #4a5568;
+    margin-top: 2px;
+}
+
+/* Caja de tipo de documento — borde simple, sin border-radius para wkhtmltopdf */
+.doc-type-box {
+    border: 2px solid #1a3a5c;
+    padding: 8px 10px;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.doc-type-label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    color: #6b7280;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.doc-type-value {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #1a3a5c;
+}
+
+.doc-folio-box {
+    text-align: right;
+}
+
+.doc-folio-label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    color: #6b7280;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+}
+
+.doc-folio-value {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 7.5pt;
+    color: #1a3a5c;
+    font-weight: bold;
+    word-break: break-all;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BARRA FISCAL — tabla HTML, compatible con todos los motores
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fiscal-bar {
+    width: 100%;
+    background: #eef2f7;
+    border: 1px solid #c5cdd8;
+    border-top: 3px solid #1a3a5c;
+    margin-bottom: 12px;
+    padding: 0;
+}
+
+.fiscal-bar-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.fiscal-bar-table td {
+    padding: 7px 10px;
+    border-right: 1px solid #c5cdd8;
+    vertical-align: top;
+    width: 33.33%;
+}
+
+.fiscal-bar-table td:last-child {
+    border-right: none;
+}
+
+.fiscal-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    color: #5a6a7e;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.fiscal-value {
+    font-size: 8.5pt;
+    color: #1a1a2e;
+    font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMISOR / RECEPTOR — tabla HTML de 2 columnas
+   NOTA: CSS Grid omitido por incompatibilidad con wkhtmltopdf
+   ═══════════════════════════════════════════════════════════════════════════ */
+.parties-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+}
+
+.party-cell {
+    width: 50%;
+    vertical-align: top;
+    padding: 10px;
+    border: 1px solid #c5cdd8;
+    border-top: 3px solid #1a3a5c;
+}
+
+.party-cell-receptor {
+    border-left: none;
+}
+
+.party-heading {
+    font-size: 7pt;
+    text-transform: uppercase;
+    color: #5a6a7e;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #dde3ea;
+}
+
+.party-name {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #1a3a5c;
+    margin-bottom: 2px;
+}
+
+.party-rfc {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    color: #2d5f8a;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.party-detail {
+    font-size: 7.5pt;
+    color: #4a5568;
+    margin-bottom: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLA DE CONCEPTOS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.conceptos {
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-size: 8pt;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #ffffff;
+    background: #1a3a5c;
+    padding: 5px 10px;
+    letter-spacing: 0.5px;
+    margin-bottom: 0;
+}
+
+.conceptos-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+}
+
+.conceptos-table thead tr {
+    background: #eef2f7;
+    border-bottom: 2px solid #1a3a5c;
+}
+
+.conceptos-table th {
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    color: #2d4a6b;
+    letter-spacing: 0.2px;
+}
+
+.conceptos-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #dde3ea;
+    vertical-align: top;
+    color: #1a1a2e;
+}
+
+.conceptos-table tbody tr:last-child td {
+    border-bottom: 2px solid #1a3a5c;
+}
+
+/* Zebra striping — compatible con todos los motores */
+.conceptos-table tbody tr.row-odd {
+    background: #ffffff;
+}
+
+.conceptos-table tbody tr.row-even {
+    background: #f5f7fa;
+}
+
+.col-cantidad {
+    width: 8%;
+    text-align: right;
+}
+
+.col-unidad {
+    width: 9%;
+}
+
+.col-clave {
+    width: 10%;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 7.5pt;
+    color: #4a5568;
+}
+
+.col-descripcion {
+    width: 39%;
+}
+
+.col-precio {
+    width: 17%;
+    text-align: right;
+    font-family: "Courier New", Courier, monospace;
+}
+
+.col-importe {
+    width: 17%;
+    text-align: right;
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+}
+
+.th-right {
+    text-align: right;
+}
+
+.tax-info {
+    margin-top: 3px;
+}
+
+.tax-badge {
+    /*
+     * display: inline-block — soportado universalmente
+     * background-color solido — sin gradientes ni transparencias
+     */
+    display: inline-block;
+    background: #dbeafe;
+    color: #1a3a5c;
+    font-size: 6.5pt;
+    padding: 1px 5px;
+    font-weight: bold;
+    margin-right: 3px;
+    /* border-radius omitido para máxima compatibilidad con wkhtmltopdf */
+    border: 1px solid #93c5fd;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOTALES — tabla HTML alineada a la derecha
+   ═══════════════════════════════════════════════════════════════════════════ */
+.totals-section {
+    margin-bottom: 12px;
+    text-align: right;
+}
+
+.totals-table {
+    /*
+     * margin-left: auto → alinea la tabla a la derecha
+     * Compatible con todos los motores
+     */
+    margin-left: auto;
+    width: 270px;
+    border-collapse: collapse;
+}
+
+.totals-table td {
+    padding: 5px 8px;
+    font-size: 8.5pt;
+    border-bottom: 1px solid #dde3ea;
+}
+
+.total-label-cell {
+    text-align: left;
+    color: #4a5568;
+}
+
+.total-value-cell {
+    text-align: right;
+    font-family: "Courier New", Courier, monospace;
+    color: #1a1a2e;
+    font-weight: bold;
+}
+
+.total-final-row td {
+    border-top: 2px solid #1a3a5c;
+    border-bottom: none;
+    padding-top: 8px;
+}
+
+.total-final-label {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #1a3a5c;
+}
+
+.total-final-value {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #1a3a5c;
+    font-family: "Courier New", Courier, monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIMBRE FISCAL DIGITAL — tabla HTML de 2 columnas
+   ═══════════════════════════════════════════════════════════════════════════ */
+.timbre-section {
+    margin-bottom: 12px;
+    border: 1px solid #c5cdd8;
+    border-top: 3px solid #1a3a5c;
+}
+
+.timbre-inner-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.timbre-qr-cell {
+    width: 140px;
+    vertical-align: middle;
+    text-align: center;
+    padding: 12px;
+    border-right: 1px solid #c5cdd8;
+    background: #f5f7fa;
+}
+
+.timbre-data-cell {
+    vertical-align: top;
+    padding: 10px 14px;
+}
+
+.qr-image {
+    width: 115px;
+    height: 115px;
+    display: block;
+    margin: 0 auto;
+}
+
+.qr-placeholder {
+    width: 115px;
+    height: 115px;
+    background: #dde3ea;
+    display: block;
+    margin: 0 auto;
+}
+
+.qr-caption {
+    font-size: 6.5pt;
+    color: #6b7280;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.timbre-heading {
+    font-size: 8pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #1a3a5c;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #dde3ea;
+    letter-spacing: 0.3px;
+}
+
+.timbre-row-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.5pt;
+}
+
+.timbre-row-table td {
+    padding: 3px 0;
+    vertical-align: top;
+}
+
+.tfd-label {
+    width: 165px;
+    color: #5a6a7e;
+    font-weight: bold;
+    padding-right: 8px;
+}
+
+.tfd-value {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 7pt;
+    color: #1a1a2e;
+    word-break: break-all;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SELLOS DIGITALES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sellos {
+    margin-bottom: 12px;
+}
+
+.sello-block {
+    margin-bottom: 8px;
+}
+
+.sello-label {
+    font-size: 7pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #4a5568;
+    letter-spacing: 0.2px;
+    margin-bottom: 3px;
+}
+
+.sello-value {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 6pt;
+    color: #374151;
+    background: #f5f7fa;
+    border: 1px solid #c5cdd8;
+    padding: 6px 8px;
+    word-break: break-all;
+    line-height: 1.5;
+}
+
+.cadena-original {
+    color: #1a3a5c;
+    font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PIE DE PÁGINA / LEYENDAS FISCALES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.leyendas {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #c5cdd8;
+}
+
+.leyenda {
+    font-size: 7pt;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-bottom: 3px;
+    text-align: center;
+}
+
+.leyenda a {
+    color: #1a3a5c;
+    text-decoration: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OPTIMIZACIONES DE IMPRESIÓN
+   - print-color-adjust: exact  → W3C estándar (Firefox 97+, Chrome 93+, WeasyPrint 53+)
+   - -webkit-print-color-adjust → alias legacy para Chromium / wkhtmltopdf
+   Ambas propiedades se declaran para máxima cobertura.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

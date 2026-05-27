@@ -2,9 +2,8 @@
 
 import logging
 from pathlib import Path
-from typing import Any
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import FileSystemLoader, Template, select_autoescape
 from jinja2.sandbox import SandboxedEnvironment
 
 from ..exceptions import TemplateNotFoundError
@@ -49,7 +48,7 @@ class TemplateManager:
             lstrip_blocks=True,
         )
 
-    def get_template(self, template_name: str) -> Any:
+    def get_template(self, template_name: str) -> Template:
         """
         Get Jinja2 template by name.
 

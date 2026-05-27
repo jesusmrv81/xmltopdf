@@ -2,7 +2,7 @@
 /* Modern, clean design inspired by Stripe, Linear, Vercel */
 
 @page {
-    size: A4;
+    size: letter;          /* 8.5 × 11 in — tamaño carta México */
     margin: 15mm 15mm 20mm 15mm;
 }
 

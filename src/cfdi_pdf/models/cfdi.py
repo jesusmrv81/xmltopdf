@@ -39,7 +39,7 @@ class CFDI(BaseModel):
     impuestos: ImpuestosComprobante | None = Field(None, description="Impuestos")
     timbre_fiscal: TimbreFiscalDigital | None = Field(None, description="Timbre Fiscal Digital")
 
-    complementos: dict[str, dict] = Field(
+    complementos: dict[str, dict[str, object]] = Field(
         default_factory=dict,
         description="Complementos adicionales (Carta Porte, Pagos, Nómina, etc.)",
     )

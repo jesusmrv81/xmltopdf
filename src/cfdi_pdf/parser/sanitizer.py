@@ -6,14 +6,15 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# Matches characters that are NOT valid in XML 1.0:
+# Valid ranges: U+0009, U+000A, U+000D, U+0020–U+D7FF, U+E000–U+FFFD, U+10000–U+10FFFF
+_INVALID_XML_CHARS: re.Pattern[str] = re.compile(
+    r"[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]"
+)
+
 
 class XMLSanitizer:
     """Sanitizes XML content for UTF-8 compliance and proper escaping."""
-
-    # Valid XML 1.0 characters
-    _VALID_XML_CHARS = re.compile(
-        r"^[\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]*$"
-    )
 
     # XML escape mappings
     _XML_ESCAPES = {
@@ -29,9 +30,9 @@ class XMLSanitizer:
         """
         Sanitize text for XML compliance.
 
-        - Removes invalid XML characters
-        - Logs warnings for removed characters
-        - Preserves valid Unicode (accents, ñ, emojis with warning)
+        - Removes invalid XML 1.0 characters via compiled regex (O(n) single pass)
+        - Logs a warning with count when invalid characters are removed
+        - Preserves valid Unicode (accents, ñ, emojis — with a warning)
 
         Args:
             text: Input text to sanitize
@@ -42,25 +43,20 @@ class XMLSanitizer:
         if not text:
             return text
 
-        # Check for emojis (warn but allow)
-        if any(ord(char) > 0xFFFF for char in text):
-            logger.warning("Text contains emoji characters. Allowed but not recommended for SAT.")
+        # Warn about emojis (U+10000+) before removal check — they ARE valid XML
+        if any(ord(ch) > 0xFFFF for ch in text):
+            logger.warning(
+                "Text contains emoji/supplementary characters. "
+                "Allowed by XML 1.0 but not recommended for SAT."
+            )
 
-        # Remove invalid XML characters
-        sanitized_chars = []
-        invalid_count = 0
+        # Single-pass removal of invalid characters
+        sanitized, count = _INVALID_XML_CHARS.subn("", text)
 
-        for char in text:
-            if cls._VALID_XML_CHARS.match(char):
-                sanitized_chars.append(char)
-            else:
-                invalid_count += 1
-                logger.warning(f"Removed invalid XML character: U+{ord(char):04X}")
+        if count:
+            logger.warning("Removed %d invalid XML character(s)", count)
 
-        if invalid_count > 0:
-            logger.warning(f"Removed {invalid_count} invalid XML character(s)")
-
-        return "".join(sanitized_chars)
+        return sanitized
 
     @classmethod
     def escape_xml(cls, text: str) -> str:

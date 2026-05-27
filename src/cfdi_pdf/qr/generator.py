@@ -4,7 +4,6 @@ import logging
 from decimal import Decimal
 from io import BytesIO
 from typing import TYPE_CHECKING
-from urllib.parse import quote
 
 import qrcode
 from qrcode.constants import ERROR_CORRECT_M
