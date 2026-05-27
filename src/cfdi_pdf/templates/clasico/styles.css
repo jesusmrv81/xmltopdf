@@ -635,6 +635,14 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   PAGOS — evitar saltos de página dentro de cada bloque
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pago-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    OPTIMIZACIONES DE IMPRESIÓN
    Ambas propiedades declaradas para cobertura máxima:
    - -webkit-print-color-adjust → Chromium / wkhtmltopdf

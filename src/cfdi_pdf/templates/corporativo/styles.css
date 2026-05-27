@@ -595,6 +595,14 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   PAGOS — evitar saltos de página dentro de cada bloque
+   ═══════════════════════════════════════════════════════════════════════════ */
+.pago-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    OPTIMIZACIONES DE IMPRESIÓN
    - print-color-adjust: exact  → W3C estándar (Firefox 97+, Chrome 93+, WeasyPrint 53+)
    - -webkit-print-color-adjust → alias legacy para Chromium / wkhtmltopdf
