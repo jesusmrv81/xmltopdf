@@ -115,7 +115,7 @@ class XMLSanitizer:
         Returns:
             Dictionary with sanitized values
         """
-        sanitized = {}
+        sanitized: dict[str, Any] = {}
 
         for key, value in data.items():
             if isinstance(value, str):

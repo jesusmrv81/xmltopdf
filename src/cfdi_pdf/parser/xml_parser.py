@@ -283,6 +283,9 @@ class CFDIParser:
             Retencion(
                 impuesto=self._get_attr(elem, "Impuesto"),
                 importe=self._get_decimal(elem, "Importe"),
+                base=None,
+                tipo_factor=None,
+                tasa_o_cuota=None,
             )
             for elem in retenciones_elem.findall(f"{{{CFDI_NS}}}Retencion")
         ]
@@ -348,7 +351,7 @@ class CFDIParser:
 
     def _element_to_dict(self, elem: etree._Element) -> dict[str, object]:
         """Convert XML element to dictionary (for complementos)."""
-        result: dict[str, object] = dict(elem.attrib)
+        result: dict[str, object] = {str(k): str(v) for k, v in elem.attrib.items()}
 
         for child in elem:
             tag = child.tag
@@ -359,7 +362,7 @@ class CFDIParser:
             if existing is None:
                 result[local_name] = child_dict
             elif isinstance(existing, list):
-                existing.append(child_dict)  # type: ignore[union-attr]
+                existing.append(child_dict)
             else:
                 result[local_name] = [existing, child_dict]
 

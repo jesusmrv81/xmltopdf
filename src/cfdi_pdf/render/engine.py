@@ -96,7 +96,7 @@ class RenderEngine:
                 logger.info("PDF saved to: %s", resolved)
                 return b""
             else:
-                pdf_bytes: bytes = html.write_pdf()  # type: ignore[assignment]
+                pdf_bytes: bytes = html.write_pdf()
                 logger.info("PDF generated successfully")
                 return pdf_bytes
         except Exception as exc:
