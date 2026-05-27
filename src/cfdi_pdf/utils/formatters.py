@@ -17,9 +17,7 @@ class Formatters:
     """Formatting utilities for CFDI data."""
 
     @staticmethod
-    def format_currency(
-        amount: Decimal, moneda: str = "MXN", include_symbol: bool = True
-    ) -> str:
+    def format_currency(amount: Decimal, moneda: str = "MXN", include_symbol: bool = True) -> str:
         """
         Format amount as currency.
 

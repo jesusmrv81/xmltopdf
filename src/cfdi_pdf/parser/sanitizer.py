@@ -2,12 +2,13 @@
 
 import logging
 import re
+import typing
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Matches characters that are NOT valid in XML 1.0:
-# Valid ranges: U+0009, U+000A, U+000D, U+0020–U+D7FF, U+E000–U+FFFD, U+10000–U+10FFFF
+# Valid ranges: U+0009, U+000A, U+000D, U+0020-U+D7FF, U+E000-U+FFFD, U+10000-U+10FFFF
 _INVALID_XML_CHARS: re.Pattern[str] = re.compile(
     r"[^\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]"
 )
@@ -17,7 +18,7 @@ class XMLSanitizer:
     """Sanitizes XML content for UTF-8 compliance and proper escaping."""
 
     # XML escape mappings
-    _XML_ESCAPES = {
+    _XML_ESCAPES: typing.ClassVar[dict[str, str]] = {
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
@@ -123,8 +124,7 @@ class XMLSanitizer:
                 sanitized[key] = cls.sanitize_dict(value)
             elif isinstance(value, list):
                 sanitized[key] = [
-                    cls.sanitize_dict(item) if isinstance(item, dict) else item
-                    for item in value
+                    cls.sanitize_dict(item) if isinstance(item, dict) else item for item in value
                 ]
             else:
                 sanitized[key] = value

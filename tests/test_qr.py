@@ -40,7 +40,7 @@ class TestSATQRGenerator:
         generator = SATQRGenerator()
 
         sello = "abc123def456ghi789jkl012mno345pqr678stu901vwx234"
-        qr_bytes = generator.generate(
+        generator.generate(
             uuid="CCE4D168-1234-5678-9ABC-DEF012345678",
             rfc_emisor="AAA010101AAA",
             rfc_receptor="XAXX010101000",
@@ -54,10 +54,10 @@ class TestSATQRGenerator:
     def test_url_no_encoding(self) -> None:
         """Test that URL is built without URL encoding."""
         generator = SATQRGenerator()
-        
+
         # Use sello with special chars that would be encoded
         sello = "abc123def456ghi789jkl012mno345pqr678stu901+/=="
-        
+
         url = generator._build_url(
             uuid="cce4d168-1234-5678-9abc-def012345678",
             rfc_emisor="AAA010101AAA",
@@ -65,7 +65,7 @@ class TestSATQRGenerator:
             total=1160.00,
             sello_cfd=sello,
         )
-        
+
         # UUID should be uppercase
         assert "id=CCE4D168-1234-5678-9ABC-DEF012345678" in url
         # No URL encoding for special chars (last 8 chars of sello)
@@ -82,7 +82,7 @@ class TestSATQRGenerator:
     def test_uuid_uppercase(self) -> None:
         """Test that UUID is converted to uppercase in URL."""
         generator = SATQRGenerator()
-        
+
         url = generator._build_url(
             uuid="cce4d168-1234-5678-9abc-def012345678",
             rfc_emisor="AAA010101AAA",
@@ -90,7 +90,7 @@ class TestSATQRGenerator:
             total=100.00,
             sello_cfd="abc123def456ghi789",
         )
-        
+
         assert "id=CCE4D168-1234-5678-9ABC-DEF012345678" in url
         assert "cce4d168" not in url
 

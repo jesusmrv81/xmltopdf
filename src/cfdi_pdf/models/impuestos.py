@@ -49,9 +49,7 @@ class ImpuestosComprobante(BaseModel):
     total_impuestos_retenidos: Decimal | None = Field(
         None, description="Total de impuestos retenidos"
     )
-    traslados: list[Traslado] = Field(
-        default_factory=list, description="Traslados del comprobante"
-    )
+    traslados: list[Traslado] = Field(default_factory=list, description="Traslados del comprobante")
     retenciones: list[Retencion] = Field(
         default_factory=list, description="Retenciones del comprobante"
     )

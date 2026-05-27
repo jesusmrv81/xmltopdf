@@ -148,7 +148,7 @@ class SATQRGenerator:
         if "." not in formatted:
             raise InvalidSATQRError(f"Invalid total format: {formatted}")
 
-        integer_part, decimal_part = formatted.split(".")
+        _integer_part, decimal_part = formatted.split(".")
         if len(decimal_part) != 6:
             raise InvalidSATQRError(f"Total must have exactly 6 decimals: {formatted}")
 

@@ -102,11 +102,11 @@ class CFDIParser:
         """Create XML parser with security protections."""
         return etree.XMLParser(
             resolve_entities=False,  # Prevent XXE attacks
-            no_network=True,         # Disable network access
-            dtd_validation=False,    # Disable DTD validation
-            load_dtd=False,          # Don't load DTD
-            huge_tree=False,         # Prevent XML bombs
-            recover=True,            # Recover from minor errors
+            no_network=True,  # Disable network access
+            dtd_validation=False,  # Disable DTD validation
+            load_dtd=False,  # Don't load DTD
+            huge_tree=False,  # Prevent XML bombs
+            recover=True,  # Recover from minor errors
         )
 
     # ── root parser ───────────────────────────────────────────────────────────
@@ -118,9 +118,7 @@ class CFDIParser:
 
         version = self._get_attr(root, "Version")
         if version != "4.0":
-            raise InvalidCFDIError(
-                f"Unsupported CFDI version: {version}. Only 4.0 is supported."
-            )
+            raise InvalidCFDIError(f"Unsupported CFDI version: {version}. Only 4.0 is supported.")
 
         return CFDI(
             version=version,
@@ -184,8 +182,7 @@ class CFDIParser:
             raise InvalidCFDIError("Missing required element: Conceptos")
 
         conceptos = [
-            self._parse_concepto(elem)
-            for elem in conceptos_elem.findall(f"{{{CFDI_NS}}}Concepto")
+            self._parse_concepto(elem) for elem in conceptos_elem.findall(f"{{{CFDI_NS}}}Concepto")
         ]
 
         if not conceptos:
@@ -208,9 +205,7 @@ class CFDIParser:
             impuestos=self._parse_impuestos_concepto(elem),
         )
 
-    def _parse_impuestos_concepto(
-        self, concepto_elem: etree._Element
-    ) -> ImpuestosConcepto | None:
+    def _parse_impuestos_concepto(self, concepto_elem: etree._Element) -> ImpuestosConcepto | None:
         """Parse taxes at concept level."""
         impuestos_elem = concepto_elem.find(f"{{{CFDI_NS}}}Impuestos")
         if impuestos_elem is None:
@@ -224,9 +219,7 @@ class CFDIParser:
 
         return ImpuestosConcepto(traslados=traslados, retenciones=retenciones)
 
-    def _parse_impuestos_comprobante(
-        self, root: etree._Element
-    ) -> ImpuestosComprobante | None:
+    def _parse_impuestos_comprobante(self, root: etree._Element) -> ImpuestosComprobante | None:
         """Parse taxes at comprobante level."""
         impuestos_elem = root.find(f"{{{CFDI_NS}}}Impuestos")
         if impuestos_elem is None:
@@ -263,9 +256,7 @@ class CFDIParser:
             for elem in traslados_elem.findall(f"{{{CFDI_NS}}}Traslado")
         ]
 
-    def _parse_retenciones_concepto(
-        self, impuestos_elem: etree._Element
-    ) -> list[Retencion]:
+    def _parse_retenciones_concepto(self, impuestos_elem: etree._Element) -> list[Retencion]:
         """Parse Retenciones at concept level."""
         retenciones_elem = impuestos_elem.find(f"{{{CFDI_NS}}}Retenciones")
         if retenciones_elem is None:
@@ -282,9 +273,7 @@ class CFDIParser:
             for elem in retenciones_elem.findall(f"{{{CFDI_NS}}}Retencion")
         ]
 
-    def _parse_retenciones_comprobante(
-        self, impuestos_elem: etree._Element
-    ) -> list[Retencion]:
+    def _parse_retenciones_comprobante(self, impuestos_elem: etree._Element) -> list[Retencion]:
         """Parse Retenciones at comprobante level."""
         retenciones_elem = impuestos_elem.find(f"{{{CFDI_NS}}}Retenciones")
         if retenciones_elem is None:
@@ -408,13 +397,9 @@ class CFDIParser:
         try:
             return Decimal(value_str)
         except InvalidOperation as exc:
-            raise InvalidCFDIError(
-                f"Invalid decimal value for {attr_name}: {value_str!r}"
-            ) from exc
+            raise InvalidCFDIError(f"Invalid decimal value for {attr_name}: {value_str!r}") from exc
 
-    def _get_optional_decimal(
-        self, elem: etree._Element, attr_name: str
-    ) -> Decimal | None:
+    def _get_optional_decimal(self, elem: etree._Element, attr_name: str) -> Decimal | None:
         """Get an optional attribute as Decimal, or None."""
         value_str = self._get_optional_attr(elem, attr_name)
         if value_str is None:
@@ -422,6 +407,4 @@ class CFDIParser:
         try:
             return Decimal(value_str)
         except InvalidOperation as exc:
-            raise InvalidCFDIError(
-                f"Invalid decimal value for {attr_name}: {value_str!r}"
-            ) from exc
+            raise InvalidCFDIError(f"Invalid decimal value for {attr_name}: {value_str!r}") from exc

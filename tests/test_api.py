@@ -103,9 +103,8 @@ class TestCFDIPDF:
         """Test that invalid XML raises error."""
         pdf = CFDIPDF()
 
-        with pytest.raises((XMLParseError, CFDIPDFError)):
-            with tempfile.TemporaryDirectory() as tmpdir:
-                pdf.render_from_string(invalid_xml, output_dir=tmpdir)
+        with pytest.raises((XMLParseError, CFDIPDFError)), tempfile.TemporaryDirectory() as tmpdir:
+            pdf.render_from_string(invalid_xml, output_dir=tmpdir)
 
     def test_render_with_cfdi_with_retenciones(self, cfdi_with_retenciones_xml: str) -> None:
         """Test rendering CFDI with retenciones."""

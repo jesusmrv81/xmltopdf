@@ -47,16 +47,14 @@ class TestXMLSanitizer:
 
     def test_sanitize_none(self) -> None:
         """Test sanitizing None."""
-        assert XMLSanitizer.sanitize_text(None) == None  # type: ignore
+        assert XMLSanitizer.sanitize_text(None) is None  # type: ignore
 
     def test_sanitize_dict(self) -> None:
         """Test sanitizing dictionary."""
         data = {
             "name": "Test & Company",
             "description": "Café & Niño",
-            "nested": {
-                "value": "Test <value>"
-            }
+            "nested": {"value": "Test <value>"},
         }
         result = XMLSanitizer.sanitize_dict(data)
         assert result["name"] == "Test & Company"

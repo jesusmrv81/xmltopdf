@@ -8,7 +8,6 @@ import pytest
 
 from cfdi_pdf import CFDIPDF
 
-
 CSS_EXPERIMENTAL_PATTERNS = [
     # CSS variables — el lookbehind variable-width no es soportado en Python re;
     # la detección de comentarios se hace en _get_css_lines_without_comments antes
@@ -272,15 +271,15 @@ class TestAllTemplatesCompatibility:
     """Tests de compatibilidad aplicados a todos los templates incluyendo minimal."""
 
     @pytest.mark.parametrize("template_name", ["minimal", "corporativo", "clasico"])
-    def test_template_renders_valid_pdf(
-        self, template_name: str, valid_cfdi_40_xml: str
-    ) -> None:
+    def test_template_renders_valid_pdf(self, template_name: str, valid_cfdi_40_xml: str) -> None:
         """Todos los templates deben producir PDFs válidos."""
         pdf = CFDIPDF(template=template_name)
         with tempfile.TemporaryDirectory() as tmpdir:
             result = pdf.render_from_string(valid_cfdi_40_xml, output_dir=tmpdir)
             content = result.read_bytes()
-            assert content.startswith(b"%PDF"), f"Template '{template_name}' no produjo un PDF válido"
+            assert content.startswith(b"%PDF"), (
+                f"Template '{template_name}' no produjo un PDF válido"
+            )
 
     @pytest.mark.parametrize("template_name", ["corporativo", "clasico"])
     def test_template_css_has_page_rule(self, template_name: str) -> None:
@@ -289,7 +288,9 @@ class TestAllTemplatesCompatibility:
         css_text = css_path.read_text(encoding="utf-8")
 
         assert "@page" in css_text, f"@page ausente en {template_name}/styles.css"
-        assert "letter" in css_text, f"Tamaño carta (letter) no definido en {template_name}/styles.css"
+        assert "letter" in css_text, (
+            f"Tamaño carta (letter) no definido en {template_name}/styles.css"
+        )
 
     @pytest.mark.parametrize("template_name", ["corporativo", "clasico"])
     def test_template_css_has_print_color_adjust(self, template_name: str) -> None:

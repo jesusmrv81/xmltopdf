@@ -18,7 +18,10 @@ class TestFormatters:
 
     def test_format_currency_without_symbol(self) -> None:
         """Test currency formatting without symbol."""
-        assert Formatters.format_currency(Decimal("1000.50"), "MXN", include_symbol=False) == "1,000.50"
+        assert (
+            Formatters.format_currency(Decimal("1000.50"), "MXN", include_symbol=False)
+            == "1,000.50"
+        )
 
     def test_format_tax_rate_16_percent(self) -> None:
         """Test 16% tax rate formatting."""

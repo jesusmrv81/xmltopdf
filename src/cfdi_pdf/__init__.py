@@ -19,9 +19,9 @@ __all__ = [
     "CFDIPDFError",
     "InvalidCFDIError",
     "InvalidSATQRError",
-    "TemplateRenderError",
-    "XMLParseError",
-    "UTF8SanitizationError",
-    "TemplateNotFoundError",
     "PDFGenerationError",
+    "TemplateNotFoundError",
+    "TemplateRenderError",
+    "UTF8SanitizationError",
+    "XMLParseError",
 ]

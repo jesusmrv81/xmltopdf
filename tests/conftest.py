@@ -29,19 +29,19 @@ def valid_cfdi_40_xml() -> str:
     LugarExpedicion="06600"
     NoCertificado="30001000000400002495"
     Certificado="MIIE...">
-    
+
     <cfdi:Emisor
         Rfc="AAA010101AAA"
         Nombre="EMPRESA EJEMPLO SA DE CV"
         RegimenFiscal="601"/>
-    
+
     <cfdi:Receptor
         Rfc="XAXX010101000"
         Nombre="PUBLICO EN GENERAL"
         DomicilioFiscalReceptor="06600"
         RegimenFiscalReceptor="616"
         UsoCFDI="S01"/>
-    
+
     <cfdi:Conceptos>
         <cfdi:Concepto
             ClaveProdServ="01010101"
@@ -53,7 +53,7 @@ def valid_cfdi_40_xml() -> str:
             Importe="1000.00"
             Descuento="0.00"
             ObjetoImp="02">
-            
+
             <cfdi:Impuestos>
                 <cfdi:Traslados>
                     <cfdi:Traslado
@@ -66,7 +66,7 @@ def valid_cfdi_40_xml() -> str:
             </cfdi:Impuestos>
         </cfdi:Concepto>
     </cfdi:Conceptos>
-    
+
     <cfdi:Impuestos TotalImpuestosTrasladados="160.00">
         <cfdi:Traslados>
             <cfdi:Traslado
@@ -77,7 +77,7 @@ def valid_cfdi_40_xml() -> str:
                 Importe="160.00"/>
         </cfdi:Traslados>
     </cfdi:Impuestos>
-    
+
     <cfdi:Complemento>
         <tfd:TimbreFiscalDigital
             Version="1.1"
@@ -110,19 +110,19 @@ def cfdi_with_retenciones_xml() -> str:
     LugarExpedicion="06600"
     NoCertificado="30001000000400002495"
     Certificado="MIIE...">
-    
+
     <cfdi:Emisor
         Rfc="AAA010101AAA"
         Nombre="EMPRESA EJEMPLO SA DE CV"
         RegimenFiscal="601"/>
-    
+
     <cfdi:Receptor
         Rfc="BBB010101BBB"
         Nombre="EMPRESA RECEPTORA SA DE CV"
         DomicilioFiscalReceptor="06600"
         RegimenFiscalReceptor="601"
         UsoCFDI="G03"/>
-    
+
     <cfdi:Conceptos>
         <cfdi:Concepto
             ClaveProdServ="84111506"
@@ -133,7 +133,7 @@ def cfdi_with_retenciones_xml() -> str:
             ValorUnitario="10000.00"
             Importe="10000.00"
             ObjetoImp="02">
-            
+
             <cfdi:Impuestos>
                 <cfdi:Traslados>
                     <cfdi:Traslado
@@ -154,7 +154,7 @@ def cfdi_with_retenciones_xml() -> str:
             </cfdi:Impuestos>
         </cfdi:Concepto>
     </cfdi:Conceptos>
-    
+
     <cfdi:Impuestos TotalImpuestosTrasladados="1600.00" TotalImpuestosRetenidos="1000.00">
         <cfdi:Traslados>
             <cfdi:Traslado
@@ -170,7 +170,7 @@ def cfdi_with_retenciones_xml() -> str:
                 Importe="1000.00"/>
         </cfdi:Retenciones>
     </cfdi:Impuestos>
-    
+
     <cfdi:Complemento>
         <tfd:TimbreFiscalDigital
             Version="1.1"
@@ -213,19 +213,19 @@ def cfdi_with_special_chars_xml() -> str:
     LugarExpedicion="06600"
     NoCertificado="30001000000400002495"
     Certificado="MIIE...">
-    
+
     <cfdi:Emisor
         Rfc="AAA010101AAA"
         Nombre="EMPRESA EJEMPLO SA DE CV"
         RegimenFiscal="601"/>
-    
+
     <cfdi:Receptor
         Rfc="XAXX010101000"
         Nombre="PUBLICO EN GENERAL"
         DomicilioFiscalReceptor="06600"
         RegimenFiscalReceptor="616"
         UsoCFDI="S01"/>
-    
+
     <cfdi:Conceptos>
         <cfdi:Concepto
             ClaveProdServ="01010101"
@@ -236,7 +236,7 @@ def cfdi_with_special_chars_xml() -> str:
             ValorUnitario="1000.00"
             Importe="1000.00"
             ObjetoImp="02">
-            
+
             <cfdi:Impuestos>
                 <cfdi:Traslados>
                     <cfdi:Traslado
@@ -249,7 +249,7 @@ def cfdi_with_special_chars_xml() -> str:
             </cfdi:Impuestos>
         </cfdi:Concepto>
     </cfdi:Conceptos>
-    
+
     <cfdi:Impuestos TotalImpuestosTrasladados="160.00">
         <cfdi:Traslados>
             <cfdi:Traslado
@@ -260,7 +260,7 @@ def cfdi_with_special_chars_xml() -> str:
                 Importe="160.00"/>
         </cfdi:Traslados>
     </cfdi:Impuestos>
-    
+
     <cfdi:Complemento>
         <tfd:TimbreFiscalDigital
             Version="1.1"

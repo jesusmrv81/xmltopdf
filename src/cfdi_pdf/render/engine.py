@@ -178,9 +178,7 @@ class RenderEngine:
                 else None
             ),
             "fecha": self._formatters.format_date(cfdi.fecha),
-            "fecha_timbrado": (
-                self._formatters.format_date(tfd.fecha_timbrado) if tfd else None
-            ),
+            "fecha_timbrado": (self._formatters.format_date(tfd.fecha_timbrado) if tfd else None),
             "uuid": self._formatters.format_uuid(tfd.uuid) if tfd else None,
             "sello_cfd": self._helpers.format_sello(tfd.sello_cfd) if tfd else None,
             "sello_sat": self._helpers.format_sello(tfd.sello_sat) if tfd else None,
@@ -189,9 +187,7 @@ class RenderEngine:
     def _build_catalogs(self, cfdi: CFDI) -> dict[str, str]:
         """Build human-readable catalog descriptions dict."""
         return {
-            "regimen_fiscal_emisor": self._catalogs.get_regimen_fiscal(
-                cfdi.emisor.regimen_fiscal
-            ),
+            "regimen_fiscal_emisor": self._catalogs.get_regimen_fiscal(cfdi.emisor.regimen_fiscal),
             "regimen_fiscal_receptor": self._catalogs.get_regimen_fiscal(
                 cfdi.receptor.regimen_fiscal
             ),

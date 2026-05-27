@@ -5,6 +5,7 @@ Demuestra la conversión de un CFDI 4.0 XML a PDF
 """
 
 from pathlib import Path
+
 from cfdi_pdf import CFDIPDF
 
 # Inicializar el conversor
@@ -18,11 +19,7 @@ print("Convirtiendo CFDI 4.0 a PDF...")
 print(f"  Input:  {xml_file}")
 print(f"  Output: {output_pdf}")
 
-pdf.render(
-    xml_path=xml_file,
-    output=output_pdf,
-    template="minimal"
-)
+pdf.render(xml_path=xml_file, output=output_pdf, template="minimal")
 
 print(f"\n✅ PDF generado exitosamente: {output_pdf}")
 print(f"   Tamaño: {output_pdf.stat().st_size:,} bytes")
@@ -38,7 +35,7 @@ print(f"   Fecha: {cfdi.fecha}")
 print(f"   Conceptos: {len(cfdi.conceptos)}")
 
 if cfdi.impuestos:
-    print(f"\n💰 Impuestos:")
+    print("\n💰 Impuestos:")
     if cfdi.impuestos.total_impuestos_trasladados:
         print(f"   Trasladados: ${cfdi.impuestos.total_impuestos_trasladados:,.2f}")
     if cfdi.impuestos.total_impuestos_retenidos:

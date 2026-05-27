@@ -36,7 +36,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         prog="cfdi-pdf",
         description="Convierte archivos CFDI 4.0 XML a PDF (tamaño carta). "
-                    "El PDF generado siempre se nombra con el UUID del timbre fiscal.",
+        "El PDF generado siempre se nombra con el UUID del timbre fiscal.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Ejemplos:
@@ -81,7 +81,7 @@ Ejemplos:
         "--output-dir",
         type=Path,
         help="Directorio donde se guardarán los PDFs. "
-             "Por defecto se usa el mismo directorio del XML.",
+        "Por defecto se usa el mismo directorio del XML.",
     )
 
     parser.add_argument(

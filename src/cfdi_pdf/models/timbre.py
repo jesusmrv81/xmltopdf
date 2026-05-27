@@ -13,9 +13,7 @@ class TimbreFiscalDigital(BaseModel):
     sello_cfd: str = Field(..., description="Sello digital del CFDI")
     sello_sat: str = Field(..., description="Sello digital del SAT")
     no_certificado_sat: str = Field(..., description="Número de certificado del SAT")
-    no_certificado_emisor: str | None = Field(
-        None, description="Número de certificado del emisor"
-    )
+    no_certificado_emisor: str | None = Field(None, description="Número de certificado del emisor")
     cadena_origen: str | None = Field(None, description="Cadena original del complemento")
 
     model_config = {"frozen": True, "extra": "forbid"}

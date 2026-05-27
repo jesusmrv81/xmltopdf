@@ -16,7 +16,7 @@ class Concepto(BaseModel):
     unidad: str | None = Field(None, description="Nombre de la unidad")
     descripcion: str = Field(..., description="Descripción del concepto")
     valor_unitario: Decimal = Field(..., description="Valor unitario")
-    importe: Decimal = Field(..., description="Importe total (cantidad × valor unitario)")
+    importe: Decimal = Field(..., description="Importe total (cantidad x valor unitario)")
     descuento: Decimal | None = Field(None, description="Descuento aplicado")
     objeto_imp: str = Field(..., description="Objeto de impuesto (01-04)")
     impuestos: ImpuestosConcepto | None = Field(

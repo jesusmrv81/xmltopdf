@@ -9,11 +9,11 @@ from cfdi_pdf import CFDIPDF
 
 def create_custom_template():
     """Crear un template personalizado"""
-    
+
     # Crear directorio del template
     template_dir = Path("mi_template")
     template_dir.mkdir(exist_ok=True)
-    
+
     # Crear template.html
     template_html = """<!DOCTYPE html>
 <html>
@@ -27,7 +27,7 @@ def create_custom_template():
             <h1>FACTURA</h1>
             <div class="uuid">{{ cfdi.uuid }}</div>
         </header>
-        
+
         <section class="info">
             <div class="emisor">
                 <h2>Emisor</h2>
@@ -35,7 +35,7 @@ def create_custom_template():
                 <p>RFC: {{ cfdi.emisor.rfc }}</p>
                 <p>Régimen: {{ get_catalog('regimen_fiscal', cfdi.emisor.regimen_fiscal) }}</p>
             </div>
-            
+
             <div class="receptor">
                 <h2>Receptor</h2>
                 <p><strong>{{ cfdi.receptor.nombre }}</strong></p>
@@ -43,7 +43,7 @@ def create_custom_template():
                 <p>Uso CFDI: {{ get_catalog('uso_cfdi', cfdi.receptor.uso_cfdi) }}</p>
             </div>
         </section>
-        
+
         <section class="totales">
             <h2>Totales</h2>
             <table>
@@ -69,14 +69,14 @@ def create_custom_template():
                 </tr>
             </table>
         </section>
-        
+
         {% if qr_data %}
         <section class="qr">
             <img src="data:image/png;base64,{{ qr_data }}" alt="QR SAT">
             <p>Código QR de verificación SAT</p>
         </section>
         {% endif %}
-        
+
         <footer>
             <p>Este documento es una representación impresa de un CFDI</p>
             <p>Verificación: https://verificacfdi.facturaelectronica.sat.gob.mx</p>
@@ -85,9 +85,9 @@ def create_custom_template():
 </body>
 </html>
 """
-    
+
     (template_dir / "template.html").write_text(template_html)
-    
+
     # Crear styles.css
     styles_css = """
 * {
@@ -204,9 +204,9 @@ footer p {
     margin: 0.3em 0;
 }
 """
-    
+
     (template_dir / "styles.css").write_text(styles_css)
-    
+
     print(f"✓ Template creado en: {template_dir}")
     print(f"  - {template_dir / 'template.html'}")
     print(f"  - {template_dir / 'styles.css'}")
@@ -214,26 +214,22 @@ footer p {
 
 def use_custom_template():
     """Usar template personalizado"""
-    
+
     # Registrar directorio de templates
     pdf = CFDIPDF(template_dirs=[Path(".")])
-    
+
     # Usar template personalizado
-    pdf.render(
-        xml_path="factura.xml",
-        output="factura_custom.pdf",
-        template="mi_template"
-    )
-    
+    pdf.render(xml_path="factura.xml", output="factura_custom.pdf", template="mi_template")
+
     print("✓ PDF generado con template personalizado: factura_custom.pdf")
 
 
 def create_minimal_modern_template():
     """Crear un template minimalista moderno"""
-    
+
     template_dir = Path("minimal_modern")
     template_dir.mkdir(exist_ok=True)
-    
+
     # Template con diseño ultra-minimalista
     template_html = """<!DOCTYPE html>
 <html>
@@ -252,34 +248,34 @@ def create_minimal_modern_template():
                 <div class="uuid">{{ cfdi.uuid }}</div>
             </div>
         </div>
-        
+
         <div class="grid">
             <div class="card">
                 <div class="label">EMISOR</div>
                 <div class="value">{{ cfdi.emisor.nombre }}</div>
                 <div class="subvalue">{{ cfdi.emisor.rfc }}</div>
             </div>
-            
+
             <div class="card">
                 <div class="label">RECEPTOR</div>
                 <div class="value">{{ cfdi.receptor.nombre }}</div>
                 <div class="subvalue">{{ cfdi.receptor.rfc }}</div>
             </div>
         </div>
-        
+
         <div class="amount">
             <div class="label">TOTAL</div>
             <div class="value">{{ format_currency(cfdi.total, cfdi.moneda) }}</div>
             <div class="subvalue">{{ format_date(cfdi.fecha) }}</div>
         </div>
-        
+
         {% if qr_data %}
         <div class="qr-section">
             <img src="data:image/png;base64,{{ qr_data }}" class="qr">
             <div class="qr-text">Verificación SAT</div>
         </div>
         {% endif %}
-        
+
         <div class="footer">
             Representación impresa de CFDI
         </div>
@@ -287,7 +283,7 @@ def create_minimal_modern_template():
 </body>
 </html>
 """
-    
+
     styles_css = """
 * {
     margin: 0;
@@ -414,20 +410,20 @@ body {
     border-top: 1px solid #eee;
 }
 """
-    
+
     (template_dir / "template.html").write_text(template_html)
     (template_dir / "styles.css").write_text(styles_css)
-    
+
     print(f"✓ Template minimalista moderno creado: {template_dir}")
 
 
 if __name__ == "__main__":
     print("=== Crear Template Personalizado ===")
     create_custom_template()
-    
+
     print("\n=== Crear Template Minimalista Moderno ===")
     create_minimal_modern_template()
-    
+
     print("\n=== Usar Template Personalizado ===")
     print("Nota: Requiere un archivo factura.xml")
     # use_custom_template()
