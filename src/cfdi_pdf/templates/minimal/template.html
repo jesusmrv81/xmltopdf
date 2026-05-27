@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFDI {{ formatted.uuid }}</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                {% if logo_data %}
+                    <img src="{{ logo_data }}" alt="Logo" class="logo">
+                {% else %}
+                    <div class="logo-placeholder">
+                        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="60" height="60" rx="12" fill="#f3f4f6"/>
+                            <path d="M20 25L30 15L40 25M30 15V45" stroke="#9ca3af" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="header-right">
+                <div class="document-type">
+                    <span class="label">Tipo</span>
+                    <span class="value">{{ catalogs.tipo_comprobante }}</span>
+                </div>
+                <div class="document-type">
+                    <span class="label">Folio Fiscal</span>
+                    <span class="value uuid">{{ formatted.uuid }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Fiscal Info Bar -->
+        <div class="fiscal-bar">
+            <div class="fiscal-item">
+                <span class="fiscal-label">Fecha de Emisión</span>
+                <span class="fiscal-value">{{ formatted.fecha }}</span>
+            </div>
+            <div class="fiscal-item">
+                <span class="fiscal-label">Lugar de Expedición</span>
+                <span class="fiscal-value">{{ cfdi.lugar_expedicion }}</span>
+            </div>
+            <div class="fiscal-item">
+                <span class="fiscal-label">Moneda</span>
+                <span class="fiscal-value">{{ catalogs.moneda }} ({{ cfdi.moneda }})</span>
+            </div>
+            <div class="fiscal-item">
+                <span class="fiscal-label">Forma de Pago</span>
+                <span class="fiscal-value">{{ catalogs.forma_pago }}</span>
+            </div>
+            <div class="fiscal-item">
+                <span class="fiscal-label">Método de Pago</span>
+                <span class="fiscal-value">{{ catalogs.metodo_pago }}</span>
+            </div>
+            <div class="fiscal-item">
+                <span class="fiscal-label">Exportación</span>
+                <span class="fiscal-value">{{ catalogs.exportacion }}</span>
+            </div>
+        </div>
+
+        <!-- Emisor and Receptor -->
+        <div class="parties">
+            <div class="party">
+                <h3>Emisor</h3>
+                <div class="party-name">{{ cfdi.emisor.nombre }}</div>
+                <div class="party-rfc">{{ cfdi.emisor.rfc }}</div>
+                <div class="party-detail">Régimen Fiscal: {{ catalogs.regimen_fiscal_emisor }}</div>
+                <div class="party-detail">No. Certificado: {{ cfdi.no_certificado }}</div>
+            </div>
+            <div class="party">
+                <h3>Receptor</h3>
+                <div class="party-name">{{ cfdi.receptor.nombre }}</div>
+                <div class="party-rfc">{{ cfdi.receptor.rfc }}</div>
+                <div class="party-detail">Régimen Fiscal: {{ catalogs.regimen_fiscal_receptor }}</div>
+                <div class="party-detail">Domicilio Fiscal: {{ cfdi.receptor.domicilio_fiscal }}</div>
+                <div class="party-detail">Uso CFDI: {{ catalogs.uso_cfdi }}</div>
+            </div>
+        </div>
+
+        <!-- Conceptos Table -->
+        <section class="conceptos">
+            <h3>Conceptos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-cantidad">Cantidad</th>
+                        <th class="col-unidad">Unidad</th>
+                        <th class="col-descripcion">Descripción</th>
+                        <th class="col-precio">Precio Unit.</th>
+                        <th class="col-importe">Importe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for concepto in cfdi.conceptos %}
+                    <tr>
+                        <td class="col-cantidad">{{ format_number(concepto.cantidad, 2) }}</td>
+                        <td class="col-unidad">{{ concepto.unidad or concepto.clave_unidad }}</td>
+                        <td class="col-descripcion">
+                            {{ concepto.descripcion }}
+                            {% if concepto.impuestos and concepto.impuestos.traslados %}
+                                <div class="tax-info">
+                                    {% for traslado in concepto.impuestos.traslados %}
+                                        <span class="tax-badge">
+                                            {{ get_impuesto(traslado.impuesto) }} {{ format_tax_rate(traslado.tasa_o_cuota) }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="col-precio">{{ format_currency(concepto.valor_unitario, moneda, include_symbol=false) }}</td>
+                        <td class="col-importe">{{ format_currency(concepto.importe, moneda, include_symbol=false) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Totals -->
+        <section class="totals">
+            <div class="totals-grid">
+                <div class="total-row">
+                    <span class="total-label">Subtotal</span>
+                    <span class="total-value">{{ formatted.sub_total }}</span>
+                </div>
+                {% if cfdi.descuento %}
+                <div class="total-row">
+                    <span class="total-label">Descuento</span>
+                    <span class="total-value">-{{ formatted.descuento }}</span>
+                </div>
+                {% endif %}
+                {% if cfdi.impuestos %}
+                    {% if cfdi.impuestos.traslados %}
+                        {% for traslado in cfdi.impuestos.traslados %}
+                        <div class="total-row">
+                            <span class="total-label">
+                                {{ get_impuesto(traslado.impuesto) }} {{ format_tax_rate(traslado.tasa_o_cuota) }}
+                            </span>
+                            <span class="total-value">
+                                {{ format_currency(traslado.importe, moneda) if traslado.importe else 'Exento' }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% if cfdi.impuestos.retenciones %}
+                        {% for retencion in cfdi.impuestos.retenciones %}
+                        <div class="total-row">
+                            <span class="total-label">
+                                Ret. {{ get_impuesto(retencion.impuesto) }}
+                            </span>
+                            <span class="total-value">
+                                -{{ format_currency(retencion.importe, moneda) }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endif %}
+                <div class="total-row total-final">
+                    <span class="total-label">Total</span>
+                    <span class="total-value">{{ formatted.total }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- QR and Timbre Fiscal -->
+        <section class="timbre-section">
+            <div class="timbre-grid">
+                <div class="qr-container">
+                    {% if qr_data %}
+                        <img src="data:image/png;base64,{{ qr_data }}" alt="QR SAT" class="qr-image">
+                    {% else %}
+                        <div class="qr-placeholder">QR No Disponible</div>
+                    {% endif %}
+                    <div class="qr-caption">
+                        Código QR de verificación del SAT
+                    </div>
+                </div>
+                <div class="timbre-data">
+                    <h3>Timbre Fiscal Digital</h3>
+                    {% if cfdi.timbre_fiscal %}
+                        <div class="timbre-item">
+                            <span class="timbre-label">UUID</span>
+                            <span class="timbre-value">{{ formatted.uuid }}</span>
+                        </div>
+                        <div class="timbre-item">
+                            <span class="timbre-label">Fecha de Timbrado</span>
+                            <span class="timbre-value">{{ formatted.fecha_timbrado }}</span>
+                        </div>
+                        <div class="timbre-item">
+                            <span class="timbre-label">RFC Proveedor Certificación</span>
+                            <span class="timbre-value">{{ cfdi.timbre_fiscal.rfc_prov_certif }}</span>
+                        </div>
+                        <div class="timbre-item">
+                            <span class="timbre-label">No. Certificado SAT</span>
+                            <span class="timbre-value">{{ cfdi.timbre_fiscal.no_certificado_sat }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Sellos Digitales -->
+        {% if cfdi.timbre_fiscal %}
+        <section class="sellos">
+            <h3>Sellos Digitales</h3>
+            <div class="sello-block">
+                <div class="sello-label">Sello Digital del CFDI</div>
+                <div class="sello-value">{{ formatted.sello_cfd }}</div>
+            </div>
+            <div class="sello-block">
+                <div class="sello-label">Sello Digital del SAT</div>
+                <div class="sello-value">{{ formatted.sello_sat }}</div>
+            </div>
+            <div class="sello-block">
+                <div class="sello-label">Cadena Original del Complemento de Certificación Digital del SAT</div>
+                <div class="sello-value cadena-original">{{ cadena_original }}</div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Leyendas Fiscales -->
+        <footer class="leyendas">
+            <div class="leyenda">
+                Este documento es una representación impresa de un Comprobante Fiscal Digital a través de Internet (CFDI).
+            </div>
+            <div class="leyenda">
+                El CFDI puede ser verificado en el portal del SAT: <a href="https://verificacfdi.facturaelectronica.sat.gob.mx">verificacfdi.facturaelectronica.sat.gob.mx</a>
+            </div>
+            {% if cfdi.tipo_comprobante == 'P' %}
+            <div class="leyenda">
+                Este documento es un complemento de pago.
+            </div>
+            {% endif %}
+        </footer>
+    </div>
+</body>
+</html>
