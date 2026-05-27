@@ -17,41 +17,34 @@ on:
   pull_request:
     branches: [ main ]
 
-# Cancela runs anteriores del mismo PR/branch para ahorrar minutos
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# ────────────────────────────────────────────────────────────
-# JOB 1 — Tests
-# ────────────────────────────────────────────────────────────
 jobs:
   test:
     name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     permissions:
-      contents: read  # mínimo necesario para checkout
+      contents: read
 
     strategy:
-      fail-fast: false  # si 3.13 falla, 3.12 sigue corriendo (y viceversa)
+      fail-fast: false
       matrix:
         python-version: ["3.12", "3.13"]
 
     steps:
     - name: Checkout
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-      # SHA pinneado: protege contra tag hijacking en supply chain
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
       with:
         python-version: ${{ matrix.python-version }}
-        cache: "pip"  # evita reinstalar deps en cada run (~2-3 min ahorrados)
+        cache: "pip"
 
-    # Cache de librerías del sistema de WeasyPrint
-    # awalsh128/cache-apt-pkgs-action pinneado a SHA estable
     - name: Cache & install system deps (WeasyPrint)
-      uses: awalsh128/cache-apt-pkgs-action@5b6568a0e9723e14bbf4b32e7f9e02c48d254b45  # v1.4.2
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
       with:
         packages: >
           libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0
@@ -72,7 +65,6 @@ jobs:
     - name: Typecheck (mypy)
       run: mypy src
 
-    # --cov-fail-under=70: el job falla si la cobertura cae bajo 70%
     - name: Test (pytest + coverage)
       run: |
         pytest \
@@ -84,7 +76,7 @@ jobs:
           -o junit_family=legacy
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage.xml
         flags: unittests
@@ -92,16 +84,17 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-    # Test Analytics: detecta flaky tests y tendencias de duración
+    # Reemplaza codecov/test-results-action@v1 (deprecada)
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
+      uses: codecov/codecov-action@v5
       with:
+        files: ./junit.xml
+        report_type: test_results
         token: ${{ secrets.CODECOV_TOKEN }}
 
   # ────────────────────────────────────────────────────────────
   # JOB 2 — Audit de seguridad
-  # Corre en paralelo con test, solo en push a main
   # ────────────────────────────────────────────────────────────
   audit:
     name: Security audit (pip-audit)
@@ -122,15 +115,11 @@ jobs:
       run: pip install pip-audit
 
     - name: Audit dependencies
-      # Escanea CVEs en todas las dependencias del proyecto
-      # --desc: muestra descripción de cada vulnerabilidad encontrada
       run: pip-audit --desc -r <(pip-compile pyproject.toml --quiet 2>/dev/null || echo "")
-      # Fallback si no tienes pip-compile: audita el entorno instalado
       continue-on-error: false
 
   # ────────────────────────────────────────────────────────────
   # JOB 3 — Release
-  # Solo corre en push a main después de tests + audit exitosos
   # ────────────────────────────────────────────────────────────
   release:
     name: Release & publish
@@ -139,14 +128,14 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     permissions:
-      contents: write  # crear tags y GitHub Releases
-      id-token: write  # OIDC Trusted Publishing — sin API token en PyPI
+      contents: write
+      id-token: write
 
     steps:
     - name: Checkout (full history para tags)
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       with:
-        fetch-depth: 0  # necesario para ver todos los tags existentes
+        fetch-depth: 0
 
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
       with:
@@ -154,7 +143,7 @@ jobs:
         cache: "pip"
 
     - name: Cache & install system deps (WeasyPrint)
-      uses: awalsh128/cache-apt-pkgs-action@5b6568a0e9723e14bbf4b32e7f9e02c48d254b45  # v1.4.2
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
       with:
         packages: >
           libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0
@@ -168,7 +157,6 @@ jobs:
         pip install build twine
         pip install -e ".[dev]"
 
-    # Lee version del pyproject.toml usando tomllib (stdlib Python 3.11+)
     - name: Read version from pyproject.toml
       id: version
       run: |
@@ -182,7 +170,6 @@ jobs:
         echo "tag=v$VERSION" >> $GITHUB_OUTPUT
         echo "Detected version: $VERSION"
 
-    # Si el tag ya existe, todos los pasos siguientes se saltean
     - name: Check if tag already exists
       id: tag_check
       run: |
@@ -198,22 +185,16 @@ jobs:
       if: steps.tag_check.outputs.exists == 'false'
       run: python -m build
 
-    # twine check valida metadata, README renderizable y estructura del paquete
-    # Detecta errores antes de subir a PyPI (evita releases rotos)
     - name: Validate package metadata (twine check)
       if: steps.tag_check.outputs.exists == 'false'
       run: twine check --strict dist/*
 
-    # Instala el wheel en un entorno limpio y hace un smoke test básico
-    # Detecta imports rotos, dependencias faltantes, etc.
     - name: Smoke test wheel install
       if: steps.tag_check.outputs.exists == 'false'
       run: |
         pip install dist/*.whl --force-reinstall
         python -c "import cfdi_pdf; print('Import OK:', cfdi_pdf.__version__)"
 
-    # Crea el tag en git ANTES de crear el Release de GitHub
-    # Necesario para que softprops/action-gh-release lo encuentre limpio
     - name: Create git tag
       if: steps.tag_check.outputs.exists == 'false'
       run: |
@@ -223,23 +204,17 @@ jobs:
                 -m "Release ${{ steps.version.outputs.tag }}"
         git push origin "${{ steps.version.outputs.tag }}"
 
-    # Crea el GitHub Release con changelog auto-generado desde commits
-    # generate_release_notes usa los commits entre el tag anterior y este
     - name: Create GitHub Release
       if: steps.tag_check.outputs.exists == 'false'
-      uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191  # v2.2.1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.version.outputs.tag }}
         name: ${{ steps.version.outputs.tag }}
         generate_release_notes: true
         files: dist/*
 
-    # OIDC Trusted Publishing — PyPI valida la identidad del workflow
-    # directamente con GitHub sin necesitar PYPI_API_TOKEN
-    # Requiere configurar Trusted Publisher en pypi.org primero
     - name: Publish to PyPI (OIDC)
       if: steps.tag_check.outputs.exists == 'false'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         print-hash: true
-        # Sin password: OIDC se autentica automáticamente vía id-token
