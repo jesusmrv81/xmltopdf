@@ -171,31 +171,31 @@
     <div class="pagos-section">
         <div class="section-title">Complemento de Pago</div>
 
-        <!-- Card destacado -->
-        <div class="pagos-card">
-            <table>
-                <tr class="pagos-card-amount">
-                    <td class="pagos-card-label">Monto Total de Pagos</td>
-                    <td class="pagos-card-value">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</td>
-                </tr>
+        <!-- Totales del complemento -->
+        <table class="fiscal-table" style="margin-bottom: 12px;">
+            <tr>
+                <td>
+                    <span class="fiscal-label">Monto Total de Pagos</span>
+                    <span class="fiscal-value" style="font-weight: 700;">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</span>
+                </td>
                 {% if cfdi.pagos.totales.total_traslados_base_iva16 %}
-                <tr class="pagos-card-row">
-                    <td class="pagos-card-label">Base IVA 16%</td>
-                    <td class="pagos-card-data">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
-                </tr>
-                <tr class="pagos-card-row">
-                    <td class="pagos-card-label">IVA 16%</td>
-                    <td class="pagos-card-data">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</td>
-                </tr>
+                <td>
+                    <span class="fiscal-label">Base IVA 16%</span>
+                    <span class="fiscal-value">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</span>
+                </td>
+                <td>
+                    <span class="fiscal-label">IVA 16%</span>
+                    <span class="fiscal-value">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</span>
+                </td>
                 {% endif %}
                 {% if cfdi.pagos.totales.total_retenciones_iva %}
-                <tr class="pagos-card-row pagos-card-ret">
-                    <td class="pagos-card-label">Retención IVA</td>
-                    <td class="pagos-card-data">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</td>
-                </tr>
+                <td>
+                    <span class="fiscal-label">Retención IVA</span>
+                    <span class="fiscal-value" style="color: #dc2626;">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</span>
+                </td>
                 {% endif %}
-            </table>
-        </div>
+            </tr>
+        </table>
 
         <!-- Each Pago -->
         {% for pago in cfdi.pagos.pago %}

@@ -126,38 +126,33 @@
              ═════════════════════════════════════════════════════════ -->
         {% if cfdi.pagos %}
         <section class="pagos-section">
-            <!-- Card destacado: resumen de pagos -->
-            <div class="pagos-card">
-                <div class="pagos-card-header">
-                    <div class="pagos-card-title">Complemento de Pago</div>
-                    <div class="pagos-card-subtitle">Resumen de movimientos</div>
+            <h3>Complemento de Pago</h3>
+
+            <div class="fiscal-bar">
+                <div class="fiscal-item">
+                    <span class="fiscal-label">Monto Total de Pagos</span>
+                    <span class="fiscal-value">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</span>
                 </div>
-                <div class="pagos-card-body">
-                    <div class="pagos-card-amount">
-                        <span class="pagos-card-label">Monto Total de Pagos</span>
-                        <span class="pagos-card-value">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</span>
-                    </div>
-                    {% if cfdi.pagos.totales.total_traslados_base_iva16 %}
-                    <div class="pagos-card-row">
-                        <span class="pagos-card-label">Base IVA 16%</span>
-                        <span class="pagos-card-data">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</span>
-                    </div>
-                    <div class="pagos-card-row">
-                        <span class="pagos-card-label">IVA 16%</span>
-                        <span class="pagos-card-data">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</span>
-                    </div>
-                    {% endif %}
-                    {% if cfdi.pagos.totales.total_retenciones_iva %}
-                    <div class="pagos-card-row pagos-card-ret">
-                        <span class="pagos-card-label">Retención IVA</span>
-                        <span class="pagos-card-data">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</span>
-                    </div>
-                    {% endif %}
+                {% if cfdi.pagos.totales.total_traslados_base_iva16 %}
+                <div class="fiscal-item">
+                    <span class="fiscal-label">Base IVA 16%</span>
+                    <span class="fiscal-value">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</span>
                 </div>
+                <div class="fiscal-item">
+                    <span class="fiscal-label">IVA 16%</span>
+                    <span class="fiscal-value">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</span>
+                </div>
+                {% endif %}
+                {% if cfdi.pagos.totales.total_retenciones_iva %}
+                <div class="fiscal-item">
+                    <span class="fiscal-label">Retención IVA</span>
+                    <span class="fiscal-value" style="color: #dc2626;">-{{ format_currency(cfdi.pagos.totales.total_retenciones_iva, cfdi.pagos.pago[0].moneda_p) }}</span>
+                </div>
+                {% endif %}
             </div>
 
             {% for pago in cfdi.pagos.pago %}
-            <div class="pago-block" style="margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px;">
+            <div class="party" style="margin-top: 12px;">
                 <div class="fiscal-bar" style="margin-bottom: 8px;">
                     <div class="fiscal-item">
                         <span class="fiscal-label">Fecha de Pago</span>
@@ -177,44 +172,42 @@
                     </div>
                     <div class="fiscal-item">
                         <span class="fiscal-label">Monto</span>
-                        <span class="fiscal-value">{{ format_currency(pago.monto, pago.moneda_p) }}</span>
+                        <span class="fiscal-value" style="font-weight: 600;">{{ format_currency(pago.monto, pago.moneda_p) }}</span>
                     </div>
                 </div>
 
-                <table style="width: 100%; border-collapse: collapse; font-size: 7pt;">
+                <table>
                     <thead>
-                        <tr style="background: #f3f4f6;">
-                            <th style="padding: 4px 6px; text-align: left;">UUID Documento</th>
-                            <th style="padding: 4px 6px; text-align: right;">Moneda</th>
-                            <th style="padding: 4px 6px; text-align: right;">Parc.</th>
-                            <th style="padding: 4px 6px; text-align: right;">Saldo Ant.</th>
-                            <th style="padding: 4px 6px; text-align: right;">Pagado</th>
-                            <th style="padding: 4px 6px; text-align: right;">Saldo Insoluto</th>
+                        <tr>
+                            <th class="col-descripcion">UUID Documento</th>
+                            <th class="col-cantidad">Moneda</th>
+                            <th class="col-cantidad">Parc.</th>
+                            <th class="col-precio">Saldo Ant.</th>
+                            <th class="col-precio">Pagado</th>
+                            <th class="col-importe">Saldo Insoluto</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for docto in pago.docto_relacionado %}
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td style="padding: 4px 6px; font-size: 6.5pt;">{{ docto.id_documento }}</td>
-                            <td style="padding: 4px 6px; text-align: right;">{{ docto.moneda_dr }}</td>
-                            <td style="padding: 4px 6px; text-align: right;">{{ docto.num_parcialidad }}</td>
-                            <td style="padding: 4px 6px; text-align: right;">{{ format_currency(docto.imp_saldo_ant, docto.moneda_dr) }}</td>
-                            <td style="padding: 4px 6px; text-align: right;">{{ format_currency(docto.imp_pagado, docto.moneda_dr) }}</td>
-                            <td style="padding: 4px 6px; text-align: right;">{{ format_currency(docto.imp_saldo_insoluto, docto.moneda_dr) }}</td>
+                        <tr>
+                            <td class="col-descripcion" style="font-family: 'SF Mono', Monaco, monospace; font-size: 6.5pt;">{{ docto.id_documento }}</td>
+                            <td class="col-cantidad">{{ docto.moneda_dr }}</td>
+                            <td class="col-cantidad">{{ docto.num_parcialidad }}</td>
+                            <td class="col-precio">{{ format_currency(docto.imp_saldo_ant, docto.moneda_dr) }}</td>
+                            <td class="col-precio">{{ format_currency(docto.imp_pagado, docto.moneda_dr) }}</td>
+                            <td class="col-importe">{{ format_currency(docto.imp_saldo_insoluto, docto.moneda_dr) }}</td>
                         </tr>
                         {% if docto.impuestos_dr and (docto.impuestos_dr.traslados_dr or docto.impuestos_dr.retenciones_dr) %}
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td colspan="6" style="padding: 2px 6px;">
+                        <tr>
+                            <td colspan="6" style="padding: 2px 10px;">
                                 {% if docto.impuestos_dr.traslados_dr %}
-                                <span style="font-weight: 600; color: #374151;">Traslados DR:</span>
                                 {% for t in docto.impuestos_dr.traslados_dr %}
-                                <span style="display: inline-block; background: #dbeafe; color: #1e40af; padding: 1px 6px; border-radius: 4px; margin: 1px 2px; font-size: 6.5pt;">{{ get_impuesto(t.impuesto_dr) }} base {{ format_currency(t.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(t.tasa_o_cuota_dr) }} = {{ format_currency(t.importe_dr, docto.moneda_dr) }}</span>
+                                <span class="tax-badge">{{ get_impuesto(t.impuesto_dr) }} base {{ format_currency(t.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(t.tasa_o_cuota_dr) }} = {{ format_currency(t.importe_dr, docto.moneda_dr) }}</span>
                                 {% endfor %}
                                 {% endif %}
                                 {% if docto.impuestos_dr.retenciones_dr %}
-                                <span style="font-weight: 600; color: #374151;">Retenciones DR:</span>
                                 {% for r in docto.impuestos_dr.retenciones_dr %}
-                                <span style="display: inline-block; background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 4px; margin: 1px 2px; font-size: 6.5pt;">{{ get_impuesto(r.impuesto_dr) }} base {{ format_currency(r.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(r.tasa_o_cuota_dr) }} = {{ format_currency(r.importe_dr, docto.moneda_dr) }}</span>
+                                <span class="tax-badge" style="background: #fef3c7; color: #92400e;">Ret {{ get_impuesto(r.impuesto_dr) }} base {{ format_currency(r.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(r.tasa_o_cuota_dr) }} = {{ format_currency(r.importe_dr, docto.moneda_dr) }}</span>
                                 {% endfor %}
                                 {% endif %}
                             </td>
@@ -225,8 +218,8 @@
                 </table>
 
                 {% if pago.impuestos_p and (pago.impuestos_p.traslados_p or pago.impuestos_p.retenciones_p) %}
-                <div style="margin-top: 4px;">
-                    <div class="totals-grid" style="width: auto;">
+                <div style="margin-top: 8px;">
+                    <div class="totals-grid" style="width: auto; margin-left: auto;">
                         {% if pago.impuestos_p.traslados_p %}
                         {% for t in pago.impuestos_p.traslados_p %}
                         <div class="total-row">
