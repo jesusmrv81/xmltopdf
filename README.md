@@ -3,8 +3,8 @@
 [![PyPI version](https://img.shields.io/pypi/v/cfdi-pdf.svg)](https://pypi.org/project/cfdi-pdf/)
 [![Python Version](https://img.shields.io/pypi/pyversions/cfdi-pdf.svg)](https://pypi.org/project/cfdi-pdf/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://github.com/yourusername/cfdi-pdf/workflows/Tests/badge.svg)](https://github.com/yourusername/cfdi-pdf/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/yourusername/cfdi-pdf)](https://codecov.io/gh/yourusername/cfdi-pdf)
+[![Tests](https://github.com/jesusmrv81/xmltopdf/workflows/Tests/badge.svg)](https://github.com/jesusmrv81/xmltopdf/actions)
+[![Coverage](https://img.shields.io/codecov/c/github/jesusmrv81/xmltopdf)](https://codecov.io/gh/jesusmrv81/xmltopdf)
 
 Biblioteca profesional para convertir CFDI 4.0 XML a PDF con templates modernos y extensibles.
 
@@ -301,7 +301,7 @@ src/cfdi_pdf/
 ### Configuración del Entorno
 
 ```bash
-git clone https://github.com/yourusername/cfdi-pdf.git
+git clone https://github.com/jesusmrv81/xmltopdf.git
 cd cfdi-pdf
 
 python -m venv venv
@@ -390,8 +390,8 @@ MIT License — ver archivo [LICENSE](LICENSE) para detalles.
 
 ## Soporte
 
-- **Bugs / Features**: [GitHub Issues](https://github.com/yourusername/cfdi-pdf/issues)
-- **Discusiones**: [GitHub Discussions](https://github.com/yourusername/cfdi-pdf/discussions)
+- **Bugs / Features**: [GitHub Issues](https://github.com/jesusmrv81/xmltopdf/issues)
+- **Discusiones**: [GitHub Discussions](https://github.com/jesusmrv81/xmltopdf/discussions)
 
 ---
 
