@@ -6,7 +6,7 @@
 
 Si descubres una vulnerabilidad de seguridad:
 
-1. Envía un email a: security@cfdi-pdf.dev
+1. Envía un email a: jesusmarcos81@gmail.com
 2. Incluye:
    - Descripción de la vulnerabilidad
    - Pasos para reproducirla
@@ -193,7 +193,7 @@ pip-audit
 
 ## Contacto de Seguridad
 
-- **Email**: security@cfdi-pdf.dev
+- **Email**: jesusmarcos81@gmail.com
 - **PGP Key**: Disponible en keyservers
 - **Respuesta**: 24-48 horas hábiles
 
