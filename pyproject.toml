@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cfdi-pdf"
-version = "0.1.0"
+version = "0.1.1"
 description = "Professional CFDI 4.0 XML to PDF converter for Mexico SAT"
 readme = "README.md"
 license = "MIT"
