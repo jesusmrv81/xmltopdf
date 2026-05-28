@@ -155,7 +155,7 @@
 
         <table class="fiscal-bar-table" style="margin-bottom: 8px;">
             <tr>
-                <td><span class="fiscal-label">Monto Total de Pagos</span><br><span class="fiscal-value" style="font-weight:700;">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</span></td>
+                <td><span class="fiscal-label">Monto Total de Pagos</span><br><span class="fiscal-value">{{ format_currency(cfdi.pagos.totales.monto_total_pagos, cfdi.pagos.pago[0].moneda_p) }}</span></td>
                 {% if cfdi.pagos.totales.total_traslados_base_iva16 %}
                 <td><span class="fiscal-label">Base IVA 16%</span><br><span class="fiscal-value">{{ format_currency(cfdi.pagos.totales.total_traslados_base_iva16, cfdi.pagos.pago[0].moneda_p) }}</span></td>
                 <td><span class="fiscal-label">IVA 16%</span><br><span class="fiscal-value">{{ format_currency(cfdi.pagos.totales.total_traslados_impuesto_iva16, cfdi.pagos.pago[0].moneda_p) }}</span></td>
