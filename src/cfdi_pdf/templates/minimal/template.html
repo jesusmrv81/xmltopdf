@@ -122,7 +122,7 @@
         {% endif %}
 
         <!-- ═════════════════════════════════════════════════════════
-             COMPLEMENTO DE PAGO 2.0
+             COMPLEMENTO DE PAGO 2.0 — compacto
              ═════════════════════════════════════════════════════════ -->
         {% if cfdi.pagos %}
         <section class="pagos-section">
@@ -152,62 +152,49 @@
             </div>
 
             {% for pago in cfdi.pagos.pago %}
-            <div class="party" style="margin-top: 12px; page-break-inside: avoid; break-inside: avoid;">
-                <div class="fiscal-bar" style="margin-bottom: 8px;">
-                    <div class="fiscal-item">
-                        <span class="fiscal-label">Fecha de Pago</span>
-                        <span class="fiscal-value">{{ format_date(pago.fecha_pago) }}</span>
-                    </div>
-                    <div class="fiscal-item">
-                        <span class="fiscal-label">Forma de Pago</span>
-                        <span class="fiscal-value">{{ get_forma_pago_p(pago.forma_de_pago_p) }}</span>
-                    </div>
-                    <div class="fiscal-item">
-                        <span class="fiscal-label">Moneda</span>
-                        <span class="fiscal-value">{{ get_moneda_pago(pago.moneda_p) }} ({{ pago.moneda_p }})</span>
-                    </div>
-                    <div class="fiscal-item">
-                        <span class="fiscal-label">Tipo de Cambio</span>
-                        <span class="fiscal-value">{{ format_number(pago.tipo_cambio_p, 6) }}</span>
-                    </div>
-                    <div class="fiscal-item">
-                        <span class="fiscal-label">Monto</span>
-                        <span class="fiscal-value" style="font-weight: 600;">{{ format_currency(pago.monto, pago.moneda_p) }}</span>
-                    </div>
-                </div>
+            <div class="pago-compact" style="page-break-inside: avoid; break-inside: avoid;">
+                <table class="pago-header-table">
+                    <tr>
+                        <td><span class="fiscal-label">Fecha</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ format_date(pago.fecha_pago) }}</span></td>
+                        <td><span class="fiscal-label">Forma</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ get_forma_pago_p(pago.forma_de_pago_p) }}</span></td>
+                        <td><span class="fiscal-label">Moneda</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ pago.moneda_p }}</span></td>
+                        <td><span class="fiscal-label">T.Cambio</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ format_number(pago.tipo_cambio_p, 4) }}</span></td>
+                        <td style="text-align:right;"><span class="fiscal-label">Monto</span><br><span class="fiscal-value" style="font-size:8pt;font-weight:600;">{{ format_currency(pago.monto, pago.moneda_p) }}</span></td>
+                    </tr>
+                </table>
 
-                <table>
+                <table class="doctos-compact">
                     <thead>
                         <tr>
-                            <th class="col-descripcion">UUID Documento</th>
-                            <th class="col-cantidad">Moneda</th>
-                            <th class="col-cantidad">Parc.</th>
-                            <th class="col-precio">Saldo Ant.</th>
-                            <th class="col-precio">Pagado</th>
-                            <th class="col-importe">Saldo Insoluto</th>
+                            <th>UUID</th>
+                            <th style="width:40px;">Mon</th>
+                            <th style="width:25px;">Par</th>
+                            <th style="width:70px;">Saldo Ant</th>
+                            <th style="width:70px;">Pagado</th>
+                            <th style="width:70px;">Saldo Insol</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for docto in pago.docto_relacionado %}
                         <tr>
-                            <td class="col-descripcion" style="font-family: 'SF Mono', Monaco, monospace; font-size: 6.5pt;">{{ docto.id_documento }}</td>
-                            <td class="col-cantidad">{{ docto.moneda_dr }}</td>
-                            <td class="col-cantidad">{{ docto.num_parcialidad }}</td>
-                            <td class="col-precio">{{ format_currency(docto.imp_saldo_ant, docto.moneda_dr) }}</td>
-                            <td class="col-precio">{{ format_currency(docto.imp_pagado, docto.moneda_dr) }}</td>
-                            <td class="col-importe">{{ format_currency(docto.imp_saldo_insoluto, docto.moneda_dr) }}</td>
+                            <td style="font-family:'SF Mono',Monaco,monospace;font-size:6pt;">{{ docto.id_documento }}</td>
+                            <td style="text-align:center;">{{ docto.moneda_dr }}</td>
+                            <td style="text-align:center;">{{ docto.num_parcialidad }}</td>
+                            <td style="text-align:right;">{{ format_currency(docto.imp_saldo_ant, docto.moneda_dr) }}</td>
+                            <td style="text-align:right;">{{ format_currency(docto.imp_pagado, docto.moneda_dr) }}</td>
+                            <td style="text-align:right;">{{ format_currency(docto.imp_saldo_insoluto, docto.moneda_dr) }}</td>
                         </tr>
                         {% if docto.impuestos_dr and (docto.impuestos_dr.traslados_dr or docto.impuestos_dr.retenciones_dr) %}
                         <tr>
-                            <td colspan="6" style="padding: 2px 10px;">
+                            <td colspan="6" style="padding:1px 6px;font-size:6.5pt;">
                                 {% if docto.impuestos_dr.traslados_dr %}
                                 {% for t in docto.impuestos_dr.traslados_dr %}
-                                <span class="tax-badge">{{ get_impuesto(t.impuesto_dr) }} base {{ format_currency(t.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(t.tasa_o_cuota_dr) }} = {{ format_currency(t.importe_dr, docto.moneda_dr) }}</span>
+                                <span class="tax-badge" style="font-size:6pt;padding:1px 4px;">{{ get_impuesto(t.impuesto_dr) }} ${{ format_currency(t.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(t.tasa_o_cuota_dr) }}</span>
                                 {% endfor %}
                                 {% endif %}
                                 {% if docto.impuestos_dr.retenciones_dr %}
                                 {% for r in docto.impuestos_dr.retenciones_dr %}
-                                <span class="tax-badge" style="background: #fef3c7; color: #92400e;">Ret {{ get_impuesto(r.impuesto_dr) }} base {{ format_currency(r.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(r.tasa_o_cuota_dr) }} = {{ format_currency(r.importe_dr, docto.moneda_dr) }}</span>
+                                <span class="tax-badge" style="background:#fef3c7;color:#92400e;font-size:6pt;padding:1px 4px;">Ret {{ get_impuesto(r.impuesto_dr) }} ${{ format_currency(r.base_dr, docto.moneda_dr) }} @ {{ format_tax_rate(r.tasa_o_cuota_dr) }}</span>
                                 {% endfor %}
                                 {% endif %}
                             </td>
@@ -218,25 +205,18 @@
                 </table>
 
                 {% if pago.impuestos_p and (pago.impuestos_p.traslados_p or pago.impuestos_p.retenciones_p) %}
-                <div style="margin-top: 8px;">
-                    <div class="totals-grid" style="width: auto; margin-left: auto;">
-                        {% if pago.impuestos_p.traslados_p %}
-                        {% for t in pago.impuestos_p.traslados_p %}
-                        <div class="total-row">
-                            <span class="total-label">Traslado {{ get_impuesto(t.impuesto_p) }} {{ format_tax_rate(t.tasa_o_cuota_p) }}</span>
-                            <span class="total-value">{{ format_currency(t.importe_p, pago.moneda_p) }}</span>
-                        </div>
-                        {% endfor %}
-                        {% endif %}
-                        {% if pago.impuestos_p.retenciones_p %}
-                        {% for r in pago.impuestos_p.retenciones_p %}
-                        <div class="total-row">
-                            <span class="total-label">Retención {{ get_impuesto(r.impuesto_p) }}</span>
-                            <span class="total-value">-{{ format_currency(r.importe_p, pago.moneda_p) }}</span>
-                        </div>
-                        {% endfor %}
-                        {% endif %}
-                    </div>
+                <div style="margin-top:4px;text-align:right;font-size:7.5pt;">
+                    <span style="color:#6b7280;margin-right:8px;">Impuestos del pago:</span>
+                    {% if pago.impuestos_p.traslados_p %}
+                    {% for t in pago.impuestos_p.traslados_p %}
+                    <span class="tax-badge" style="font-size:6.5pt;">{{ get_impuesto(t.impuesto_p) }} {{ format_tax_rate(t.tasa_o_cuota_p) }}: {{ format_currency(t.importe_p, pago.moneda_p) }}</span>
+                    {% endfor %}
+                    {% endif %}
+                    {% if pago.impuestos_p.retenciones_p %}
+                    {% for r in pago.impuestos_p.retenciones_p %}
+                    <span class="tax-badge" style="background:#fef3c7;color:#92400e;font-size:6.5pt;">Ret {{ get_impuesto(r.impuesto_p) }}: -{{ format_currency(r.importe_p, pago.moneda_p) }}</span>
+                    {% endfor %}
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>

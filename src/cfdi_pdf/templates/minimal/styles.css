@@ -401,10 +401,52 @@ th.col-cantidad, th.col-precio, th.col-importe {
     text-decoration: none;
 }
 
-/* ── Pagos: evitar saltos dentro de cada bloque ────────────── */
-.pagos-section .party {
+/* ── Pagos: compacto ───────────────────────────────────────── */
+.pago-compact {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
     page-break-inside: avoid;
     break-inside: avoid;
+}
+
+.pago-header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+}
+
+.pago-header-table td {
+    padding: 2px 6px;
+    vertical-align: top;
+    border: none;
+}
+
+.doctos-compact {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7pt;
+}
+
+.doctos-compact th {
+    padding: 3px 4px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    color: #6b7280;
+    letter-spacing: 0.3px;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.doctos-compact td {
+    padding: 2px 4px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+    font-size: 6.5pt;
 }
 
 /* Print optimizations */
