@@ -595,11 +595,53 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PAGOS — evitar saltos de página dentro de cada bloque
+   PAGOS — compacto
    ═══════════════════════════════════════════════════════════════════════════ */
-.pago-block {
+.pago-compact {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border: 1px solid #93c5fd;
+    border-radius: 4px;
     page-break-inside: avoid;
     break-inside: avoid;
+}
+
+.pago-compact-header {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+}
+
+.pago-compact-header td {
+    padding: 1px 4px;
+    vertical-align: top;
+    border: none;
+}
+
+.doctos-compact {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7pt;
+}
+
+.doctos-compact th {
+    padding: 2px 4px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    color: #1e40af;
+    letter-spacing: 0.3px;
+    background: #eff6ff;
+    border-top: 1px solid #bfdbfe;
+    border-bottom: 1px solid #bfdbfe;
+}
+
+.doctos-compact td {
+    padding: 2px 4px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+    font-size: 6.5pt;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
