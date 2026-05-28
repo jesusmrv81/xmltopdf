@@ -401,6 +401,12 @@ th.col-cantidad, th.col-precio, th.col-importe {
     text-decoration: none;
 }
 
+/* ── Evitar saltos en timbre y sellos ──────────────────────── */
+.timbre-section, .sellos {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
 /* ── Pagos: compacto ───────────────────────────────────────── */
 .pago-compact {
     margin-top: 8px;
