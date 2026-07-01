@@ -44,7 +44,7 @@ jobs:
         cache: "pip"
 
     - name: Cache & install system deps (WeasyPrint)
-      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.3
       with:
         packages: >
           libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0
@@ -143,7 +143,7 @@ jobs:
         cache: "pip"
 
     - name: Cache & install system deps (WeasyPrint)
-      uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+      uses: awalsh128/cache-apt-pkgs-action@v1.6.3
       with:
         packages: >
           libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0
