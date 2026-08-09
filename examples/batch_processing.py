@@ -1,5 +1,8 @@
 """
-Procesamiento por lotes de múltiples CFDIs
+Procesamiento por lotes de múltiples CFDIs.
+
+El PDF generado siempre se nombra con el UUID del timbre fiscal
+(``{uuid}.pdf``), así que no se puede elegir el nombre de salida.
 """
 
 from pathlib import Path
@@ -7,17 +10,15 @@ from pathlib import Path
 from cfdi_pdf import CFDIPDF
 
 
-def batch_conversion_basic():
-    """Conversión por lotes básica"""
+def batch_conversion_basic() -> None:
+    """Conversión por lotes básica."""
     pdf = CFDIPDF(template="minimal")
 
-    # Buscar todos los XMLs en un directorio
     xml_dir = Path("./facturas")
     output_dir = Path("./pdfs")
     output_dir.mkdir(exist_ok=True)
 
     xml_files = list(xml_dir.glob("*.xml"))
-
     print(f"Encontrados {len(xml_files)} archivos XML")
 
     success = 0
@@ -25,19 +26,18 @@ def batch_conversion_basic():
 
     for xml_file in xml_files:
         try:
-            output_file = output_dir / f"{xml_file.stem}.pdf"
-            pdf.render(xml_path=xml_file, output=output_file)
-            print(f"✓ {xml_file.name} -> {output_file.name}")
+            output_path = pdf.render(xml_path=xml_file, output_dir=output_dir)
+            print(f"✓ {xml_file.name} -> {output_path.name}")
             success += 1
-        except Exception as e:
-            print(f"✗ {xml_file.name}: {e}")
+        except Exception as exc:
+            print(f"✗ {xml_file.name}: {exc}")
             errors += 1
 
     print(f"\nResumen: {success} exitosos, {errors} errores")
 
 
-def batch_conversion_with_progress():
-    """Conversión por lotes con barra de progreso"""
+def batch_conversion_with_progress() -> None:
+    """Conversión por lotes con barra de progreso."""
     try:
         from tqdm import tqdm
     except ImportError:
@@ -51,7 +51,6 @@ def batch_conversion_with_progress():
     output_dir.mkdir(exist_ok=True)
 
     xml_files = list(xml_dir.glob("*.xml"))
-
     print(f"Procesando {len(xml_files)} archivos...")
 
     success = 0
@@ -59,8 +58,7 @@ def batch_conversion_with_progress():
 
     for xml_file in tqdm(xml_files, desc="Convirtiendo"):
         try:
-            output_file = output_dir / f"{xml_file.stem}.pdf"
-            pdf.render(xml_path=xml_file, output=output_file)
+            pdf.render(xml_path=xml_file, output_dir=output_dir)
             success += 1
         except Exception:
             errors += 1
@@ -68,35 +66,27 @@ def batch_conversion_with_progress():
     print(f"\nCompletado: {success} exitosos, {errors} errores")
 
 
-def batch_conversion_parallel():
-    """Conversión por lotes en paralelo (multiprocesamiento)"""
+def batch_conversion_parallel() -> None:
+    """Conversión por lotes en paralelo (multiprocesamiento)."""
     import multiprocessing
     from concurrent.futures import ProcessPoolExecutor
 
-    def convert_file(xml_path: Path, output_path: Path) -> tuple[str, bool, str]:
-        """Convertir un archivo individual"""
+    def convert_file(xml_path: Path, output_dir: Path) -> tuple[str, bool, str]:
+        """Convertir un archivo individual."""
         try:
             pdf = CFDIPDF()
-            pdf.render(xml_path=xml_path, output=output_path)
-            return (xml_path.name, True, "")
-        except Exception as e:
-            return (xml_path.name, False, str(e))
+            output_path = pdf.render(xml_path=xml_path, output_dir=output_dir)
+            return (xml_path.name, True, output_path.name)
+        except Exception as exc:
+            return (xml_path.name, False, str(exc))
 
     xml_dir = Path("./facturas")
     output_dir = Path("./pdfs")
     output_dir.mkdir(exist_ok=True)
 
     xml_files = list(xml_dir.glob("*.xml"))
-
     print(f"Procesando {len(xml_files)} archivos en paralelo...")
 
-    # Preparar tareas
-    tasks = []
-    for xml_file in xml_files:
-        output_file = output_dir / f"{xml_file.stem}.pdf"
-        tasks.append((xml_file, output_file))
-
-    # Ejecutar en paralelo
     num_workers = multiprocessing.cpu_count()
     print(f"Usando {num_workers} procesos")
 
@@ -104,24 +94,21 @@ def batch_conversion_parallel():
     errors = 0
 
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        futures = [
-            executor.submit(convert_file, xml_path, output_path) for xml_path, output_path in tasks
-        ]
-
+        futures = [executor.submit(convert_file, xml_path, output_dir) for xml_path in xml_files]
         for future in futures:
-            filename, is_success, error_msg = future.result()
+            filename, is_success, detail = future.result()
             if is_success:
-                print(f"✓ {filename}")
+                print(f"✓ {filename} -> {detail}")
                 success += 1
             else:
-                print(f"✗ {filename}: {error_msg}")
+                print(f"✗ {filename}: {detail}")
                 errors += 1
 
     print(f"\nResumen: {success} exitosos, {errors} errores")
 
 
-def batch_with_error_report():
-    """Conversión por lotes con reporte de errores"""
+def batch_with_error_report() -> None:
+    """Conversión por lotes con reporte de errores."""
     pdf = CFDIPDF()
 
     xml_dir = Path("./facturas")
@@ -129,27 +116,24 @@ def batch_with_error_report():
     output_dir.mkdir(exist_ok=True)
 
     xml_files = list(xml_dir.glob("*.xml"))
-
     results = []
 
     for xml_file in xml_files:
         try:
-            output_file = output_dir / f"{xml_file.stem}.pdf"
-            pdf.render(xml_path=xml_file, output=output_file)
+            output_path = pdf.render(xml_path=xml_file, output_dir=output_dir)
             results.append(
                 {
                     "file": xml_file.name,
                     "status": "success",
-                    "output": output_file.name,
+                    "output": output_path.name,
                     "error": None,
                 }
             )
-        except Exception as e:
+        except Exception as exc:
             results.append(
-                {"file": xml_file.name, "status": "error", "output": None, "error": str(e)}
+                {"file": xml_file.name, "status": "error", "output": None, "error": str(exc)}
             )
 
-    # Generar reporte
     success = [r for r in results if r["status"] == "success"]
     errors = [r for r in results if r["status"] == "error"]
 
@@ -168,7 +152,6 @@ def batch_with_error_report():
             print(f"\nArchivo: {error['file']}")
             print(f"Error: {error['error']}")
 
-    # Guardar reporte en archivo
     report_file = output_dir / "conversion_report.txt"
     with open(report_file, "w", encoding="utf-8") as f:
         f.write("Reporte de Conversión\n")

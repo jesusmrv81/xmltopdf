@@ -58,10 +58,9 @@ endurecimiento.
 
 ## Recomendaciones de endurecimiento
 
-1. **Fijar `recover=False`** (o gestionar explícitamente los errores
-   recuperados). Más seguridad > tolerancia para este caso de uso fiscal.
-   *(La validación XSD con `validate_xsd=True` ya mitiga el impacto de XMLs
-   corruptos que parsearían "exitosamente".)*
+1. ✅ **`recover=False`** en el parser lxml — un XML malformado ahora **falla
+   ruidosamente** (`XMLParseError`) en vez de parsearse parcialmente. Un XML
+   corrupto ya no puede generar un PDF con datos fiscales incompletos.
 2. **Limitar tamaño máximo de XML** antes de parsear (p.ej. 10 MB) para blindar
    contra DoS de memoria más allá de `huge_tree=False` (que protege el árbol,
    no el input completo).

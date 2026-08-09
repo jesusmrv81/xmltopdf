@@ -150,7 +150,7 @@ class CFDIParser:
             dtd_validation=False,  # Disable DTD validation
             load_dtd=False,  # Don't load DTD
             huge_tree=False,  # Prevent XML bombs
-            recover=True,  # Recover from minor errors
+            recover=False,  # Fail on malformed XML (no silent partial parses)
         )
 
     # ── root parser ───────────────────────────────────────────────────────────

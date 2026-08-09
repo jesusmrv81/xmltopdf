@@ -30,7 +30,7 @@ from fastapi.responses import Response
 from cfdi_pdf import CFDIPDF
 from cfdi_pdf.exceptions import CFDIPDFError
 
-app = FastAPI(title="CFDI PDF Service", version="0.1.0")
+app = FastAPI(title="CFDI PDF Service", version="0.2.0")
 
 # Instancia única reutilizada entre requests. La librería no guarda estado
 # mutable por request, así que es segura para uso concurrente.

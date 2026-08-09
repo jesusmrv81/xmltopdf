@@ -7,6 +7,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-09
+
 ### Añadido
 - **Recursos del SAT en runtime** (`sat/resources.py`): los XSLT/XSD ya no se
   empaquetan; se descargan desde el SAT (mirror verificado como fallback), se
@@ -35,6 +37,12 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   Carta Porte, fecha con zona y **CLI**.
 
 ### Corregido
+- **Parser `recover=False`**: un XML malformado ahora lanza `XMLParseError` en
+  vez de parsearse parcialmente y generar PDFs con datos incompletos
+- **Examples arreglados** (`basic_usage.py`, `custom_template.py`,
+  `batch_processing.py`): usaban la API antigua (`output=`, `cfdi.uuid`,
+  `template_dirs=`, `get_catalog`); ahora usan la API actual
+  (`output_dir=`, `custom_template_paths=`, variables `formatted`/`catalogs`)
 - **CLI `--list-templates` sin argumentos fallaba** (exit 2): `files` ahora es
   opcional y se valida manualmente
 - **Cadena original del TFD**: `_build_cadena_original` ya no incluye `SelloSAT` y
@@ -52,6 +60,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - `logger.warning` con f-string → formato lazy en `render/template.py` (H8)
 
 ### Cambiado
+- **Versión 0.2.0** (primer release con cadena original, sellos, XSD y
+  complementos Nómina/Carta Porte)
 - **Recursos SAT fuera del paquete**: se eliminaron `xslt/` y `xsd/` empaquetados
   (~7 MB); ahora se descargan y cachean en runtime (H13)
 - **`SATHelpers.build_cadena_original` eliminado**: la cadena del comprobante se
@@ -124,6 +134,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Sanitización de entrada UTF-8
 - Validación de namespaces SAT
 
-[Unreleased]: https://github.com/yourusername/cfdi-pdf/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/yourusername/cfdi-pdf/releases/tag/v0.1.0
+[Unreleased]: https://github.com/jesusmrv81/xmltopdf/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/jesusmrv81/xmltopdf/releases/tag/v0.2.0
+[0.1.0]: https://github.com/jesusmrv81/xmltopdf/releases/tag/v0.1.0
 

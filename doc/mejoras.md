@@ -5,8 +5,10 @@ Organizadas por horizonte temporal. Las que resuelven hallazgos de
 
 > **Actualización (2026-08-09)**: implementados los items 1, 2, 3 (cadena
 > original oficial + XSLT, validación XSD y Nómina/Carta Porte), los hallazgos
-> H1–H8 y H11–H13, los tests de CLI (item 6) y la **descarga en runtime de los
-> recursos SAT** (H13, ya no se empaquetan ~7 MB). Ver estado en cada sección.
+> H1–H8 y H11–H13, los tests de CLI (item 6), la **descarga en runtime de los
+> recursos SAT** (H13) y los items 4/5 (examples arreglados con la API actual
+> y release **0.2.0**). Además `recover=False` en el parser (item 1 de
+> seguridad). Ver estado en cada sección.
 
 ## Arquitectura de recursos SAT (resuelta en H13)
 
@@ -38,9 +40,7 @@ los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
 6. ✅ **Tests para la CLI** (`tests/test_cli.py`)
    `cli.py` ahora tiene cobertura: conversión simple, batch, `--list-templates`,
    `--version`, archivo inexistente e XML inválido. Se corrigió además el bug
-   de `--list-templates` sin argumentos (exit 2).
-
-## Medio plazo
+   de `--list-templates` sin argumentos (exit 2).## Medio plazo
 
 7. ✅ **[H11] Tratar CFDI tipo `P` con atributos opcionales**
    `Certificado` opcional cuando `TipoDeComprobante == "P"`, según el XSD.

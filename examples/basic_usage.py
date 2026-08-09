@@ -1,133 +1,112 @@
 """
-Uso básico de CFDI PDF
+Uso básico de CFDI PDF.
 """
+
+from pathlib import Path
 
 from cfdi_pdf import CFDIPDF
 
 
-def basic_conversion():
-    """Conversión básica de XML a PDF"""
-    # Inicializar con template por defecto
+def basic_conversion() -> None:
+    """Conversión básica de XML a PDF (guarda {uuid}.pdf junto al XML)."""
     pdf = CFDIPDF(template="minimal")
-
-    # Convertir desde archivo
-    pdf.render(xml_path="factura.xml", output="factura.pdf")
-    print("✓ PDF generado: factura.pdf")
+    output_path = pdf.render(xml_path="factura.xml")
+    print(f"✓ PDF generado: {output_path}")
 
 
-def conversion_from_string():
-    """Conversión desde string XML"""
+def conversion_to_directory() -> None:
+    """Especificar un directorio de salida."""
+    pdf = CFDIPDF()
+    output_path = pdf.render(xml_path="factura.xml", output_dir=Path("./pdfs"))
+    print(f"✓ PDF generado: {output_path}")
+
+
+def conversion_from_string() -> None:
+    """Conversión desde un string XML."""
     pdf = CFDIPDF()
 
-    # Leer XML como string
     with open("factura.xml", encoding="utf-8") as f:
         xml_content = f.read()
 
-    # Convertir y obtener bytes
-    pdf_bytes = pdf.render_from_string(xml_content)
-
-    # Guardar resultado
-    with open("factura.pdf", "wb") as f:
-        f.write(pdf_bytes)
-
-    print(f"✓ PDF generado: {len(pdf_bytes)} bytes")
+    output_path = pdf.render_from_string(xml_content, output_dir="./pdfs")
+    print(f"✓ PDF generado: {output_path}")
 
 
-def conversion_with_logo():
-    """Conversión con logo personalizado"""
+def conversion_to_bytes() -> None:
+    """Obtener bytes sin escribir a disco (útil para APIs web)."""
     pdf = CFDIPDF()
 
-    pdf.render(xml_path="factura.xml", output="factura.pdf", logo_path="logo.png")
-    print("✓ PDF generado con logo")
+    with open("factura.xml", encoding="utf-8") as f:
+        xml_content = f.read()
+
+    pdf_bytes, filename = pdf.render_bytes_from_string(xml_content)
+    print(f"✓ {len(pdf_bytes)} bytes, archivo sugerido: {filename}")
 
 
-def access_cfdi_data():
-    """Acceder a datos del CFDI sin generar PDF"""
+def conversion_with_logo() -> None:
+    """Conversión con logo personalizado."""
     pdf = CFDIPDF()
+    output_path = pdf.render(xml_path="factura.xml", output_dir="./pdfs", logo_path="logo.png")
+    print(f"✓ PDF generado con logo: {output_path}")
 
-    # Parsear XML
+
+def access_cfdi_data() -> None:
+    """Acceder a los datos del CFDI sin generar PDF."""
+    pdf = CFDIPDF()
     cfdi = pdf.parse("factura.xml")
 
-    # Acceder a datos
-    print(f"UUID: {cfdi.uuid}")
+    tfd = cfdi.timbre_fiscal
+    print(f"UUID: {tfd.uuid if tfd else 'N/A'}")
     print(f"Versión: {cfdi.version}")
     print(f"Fecha: {cfdi.fecha}")
     print(f"Lugar de expedición: {cfdi.lugar_expedicion}")
 
-    # Emisor
     print("\nEmisor:")
     print(f"  RFC: {cfdi.emisor.rfc}")
     print(f"  Nombre: {cfdi.emisor.nombre}")
     print(f"  Régimen: {cfdi.emisor.regimen_fiscal}")
 
-    # Receptor
     print("\nReceptor:")
     print(f"  RFC: {cfdi.receptor.rfc}")
     print(f"  Nombre: {cfdi.receptor.nombre}")
     print(f"  Uso CFDI: {cfdi.receptor.uso_cfdi}")
 
-    # Totales
     print("\nTotales:")
-    print(f"  Subtotal: ${cfdi.subtotal:,.2f}")
+    print(f"  Subtotal: {cfdi.sub_total:,.2f}")
     if cfdi.descuento:
-        print(f"  Descuento: ${cfdi.descuento:,.2f}")
+        print(f"  Descuento: {cfdi.descuento:,.2f}")
     print(f"  Moneda: {cfdi.moneda}")
-    print(f"  Total: ${cfdi.total:,.2f}")
+    print(f"  Total: {cfdi.total:,.2f}")
 
-    # Conceptos
     print(f"\nConceptos ({len(cfdi.conceptos)}):")
-    for i, concepto in enumerate(cfdi.conceptos, 1):
-        print(f"\n  {i}. {concepto.descripcion}")
-        print(f"     Cantidad: {concepto.cantidad}")
-        print(f"     Unidad: {concepto.unidad}")
-        print(f"     Precio unitario: ${concepto.valor_unitario:,.2f}")
-        print(f"     Importe: ${concepto.importe:,.2f}")
+    for concepto in cfdi.conceptos:
+        print(f"  - {concepto.descripcion} | {concepto.cantidad} x {concepto.valor_unitario:,.2f}")
 
-    # Impuestos
-    if cfdi.impuestos:
-        print("\nImpuestos:")
-
-        if cfdi.impuestos.traslados:
-            print("\n  Traslados:")
-            for traslado in cfdi.impuestos.traslados:
-                tasa = traslado.tasa_o_cuota * 100
-                print(f"    {traslado.impuesto} {tasa}%: ${traslado.importe:,.2f}")
-
-        if cfdi.impuestos.retenciones:
-            print("\n  Retenciones:")
-            for retencion in cfdi.impuestos.retenciones:
-                tasa = retencion.tasa_o_cuota * 100
-                print(f"    {retencion.impuesto} {tasa}%: ${retencion.importe:,.2f}")
-
-    # Timbre Fiscal Digital
     if cfdi.timbre_fiscal:
+        tfd = cfdi.timbre_fiscal
         print("\nTimbre Fiscal Digital:")
-        print(f"  Versión: {cfdi.timbre_fiscal.version}")
-        print(f"  UUID: {cfdi.timbre_fiscal.uuid}")
-        print(f"  Fecha timbrado: {cfdi.timbre_fiscal.fecha_timbrado}")
-        print(f"  PAC: {cfdi.timbre_fiscal.rfc_prov_certif}")
-        print(f"  Certificado SAT: {cfdi.timbre_fiscal.no_certificado_sat}")
+        print(f"  Versión: {tfd.version}")
+        print(f"  UUID: {tfd.uuid}")
+        print(f"  Fecha timbrado: {tfd.fecha_timbrado}")
+        print(f"  PAC: {tfd.rfc_prov_certif}")
+        print(f"  Certificado SAT: {tfd.no_certificado_sat}")
 
 
-def list_available_templates():
-    """Listar templates disponibles"""
+def list_available_templates() -> None:
+    """Listar templates disponibles."""
     pdf = CFDIPDF()
-    templates = pdf.list_templates()
-
     print("Templates disponibles:")
-    for template in templates:
+    for template in pdf.list_templates():
         print(f"  - {template}")
 
 
 if __name__ == "__main__":
-    # Ejemplo básico
     print("=== Conversión Básica ===")
-    basic_conversion()
+    # basic_conversion()
 
-    # Listar templates
     print("\n=== Templates Disponibles ===")
     list_available_templates()
 
-    # Acceder a datos
     print("\n=== Datos del CFDI ===")
-    access_cfdi_data()
+    print("Nota: Requiere un archivo factura.xml")
+    # access_cfdi_data()
