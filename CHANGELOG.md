@@ -7,7 +7,32 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+- **Cadena original oficial del SAT** (`cfdi_pdf/sat/cadena_original.py`): los
+  XSLT `cadenaoriginal_4_0.xslt` (34 archivos con complementos) y
+  `cadenaoriginal_TFD_1_1.xslt` se empaquetan en el paquete y se ejecutan con
+  lxml. `CFDI.cadena_original` guarda la cadena del comprobante.
+- **Verificación de sellos** (`cfdi_pdf/crypto/verifier.py` + `SelloVerifier`):
+  `verify_sello_cfd` (certificado embebido) y `verify_sello_sat` (cert SAT)
+  validan la firma RSA SHA-256 contra la cadena original.
+- **Validación XSD** (`cfdi_pdf/parser/xsd_validator.py`): esquema `cfdv40.xsd`
+  + `catCFDI.xsd` + `tdCFDI.xsd` empaquetados; `CFDIParser(validate_xsd=True)`
+  y `CFDIPDF(validate_xsd=True)`.
+- **Complemento de Nómina 1.2**: modelos tipados (`models/nomina.py`), parser y
+  render en los 3 templates (`_partials/nomina.html`).
+- **Complemento de Carta Porte 3.1**: modelos tipados (`models/carta_porte.py`),
+  parser y render en los 3 templates (`_partials/carta_porte.html`).
+- `render_bytes_from_string(xml_content, ...)` → `(bytes, filename)` sin
+  escribir a disco — habilita integraciones web (FastAPI, S3, etc.)
+- Ejemplo `examples/fastapi_service.py`: microservicio FastAPI que consume la
+  librería pura (endpoints `/render`, `/templates`, `/health`)
+- Dependencia `cryptography` para verificación de sellos
+- Tests: cadena original, validación XSD, verificación de sellos, Nómina,
+  Carta Porte y **CLI** (nueva suite `test_cli.py`)
+
 ### Corregido
+- **CLI `--list-templates` sin argumentos fallaba** (exit 2): `files` ahora es
+  opcional y se valida manualmente
 - **Cadena original del TFD**: `_build_cadena_original` ya no incluye `SelloSAT` y
   respeta el orden oficial de `cadenaoriginal_TFD_1_1.xslt` (H1)
 - **Campos opcionales de Pagos20**: `EquivalenciaDR` y `TipoCambioP` ahora son
@@ -28,11 +53,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   hardcodeadas (H3/H7)
 - Auditoría documental completa en `doc/` (análisis, hallazgos, mejoras,
   seguridad y calidad)
-
-### Añadido
-- Tests: cadena original del TFD, campos opcionales de Pagos20, `_get_int`
-  inválido, Pagos sin Totales, CFDI tipo P sin `Certificado` y consistencia
-  de versión
+- `CFDI` modelo: nuevos campos `nomina`, `carta_porte` y `cadena_original`
 
 ### Añadido
 - Template `corporativo`: diseño azul corporativo `#1a3a5c`, tablas HTML para layout fiscal

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+    Version="4.0"
+    Fecha="2024-01-15T10:30:00"
+    FormaPago="03" MetodoPago="PUE"
+    SubTotal="1000.00" Moneda="MXN" TipoCambio="1" Total="1160.00"
+    TipoDeComprobante="I" Exportacion="01" LugarExpedicion="06600"
+    NoCertificado="30001000000400002495"
+    Certificado="MIICDzCCAXgCBEYc9dUwDQYJKoZIhvcNAQEEBQAwZTELMAkGA1UEBhMCTVgxEjAQBgNVBAgTCUosYWd1ZS4gTkUxEjAQBgNVBAcTCUosYWd1ZS4gTkUxEDAOBgNVBAoTB1Rlc3QgU0FUMRYwFAYDVQQDEw1Ub3RvQXNlbyBDb3lvdGUwHhcNMjAwMTAxMDAwMDAwWhcNMjQwMTAxMDAwMDAwWjBlMQswCQYDVQQGEwJNWDESMBAGA1UECBMJSi5hZ3VlLiBORTESMBAGA1UEBxMJSi5hZ3VlLiBORTEQMA4GA1UEChMHVGVzdCBTQVQxFjAUBgNVBAMTDVRvdG9Bc2VvIENveW90ZTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAo0S0Pg12M7YF/vh4WwXx6w2ZBQ69h0q7VDUCLQWNw10tOeov8wcBIlnf3IVqJPJYrZ5n3bFfT2SxMsSQuYh2gQdZP4dZf5ZT2B0C2nNGqZlxJWtLJ3E+ZvpSfrrS2mHwJDQcJ/9QrLWFM7xRkkNmbZ5C2nNGqZlxJWtLJ3E+ZvpSfrrS2mHwJDQcJ/9QrLWFM7xRkkNmbZ5C2nNGqZlxJWtLJ3E+ZvpSfrrS2mHwJkEKEQUCAwEAAQMBADGCATUwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEJATAVBgkrBgEEAYI3FAIxCDAGBgEEAYI3FAEwIwYJKoZIhvcNAQkEMRYEFCQHLwVrQn1L2bPEb7jKx7cY/3sEMB8GCSqGSIb3DQEJBDESBBCv6qCFLXcXsLGQZ8xUB7BQMAsGCSqGSIb3DQELBQCBnwCgB4pR3K2ZLrQ6KQlO2z2R9O1W3dH+8o6GQ5n4JhJmQKx2nNGqZlxJWtLJ3E+ZvpSfrrS2mHwJDQcJ/9QrLWFM7xRkkNmbZ5C2nNGqZlxJWtLJ3E+ZvpSfrrS2mHwJDQcJ/9QrLWFM7xRkkNmbZ5C2nNGqZlxJWtLJ3E+ZvpSfrrS2mHwJkEKEQUCAwEAAQMBADGCATUwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEJATAVBgkrBgEEAYI3FAIxCDAGBgEEAYI3FAEwIwYJKoZIhvcNAQkEMRYEFCQHLwVrQn1L2bPEb7jKx7cY/3sEMB8GCSqGSIb3DQEJBDESBBCv6qCFLXcXsLGQZ8xUB7BQ=="
+    Sello="l3Uq5SRwBpTWSanQkC2du6PQS4uIoLpD/Gk77/Z+LMAu5HgnZwFN4UC04Y6Nc7rsqCx99L0pdqJ8ZMErX7x2NJbQwLXbVpYvATqb1p+Mdoso2BvpsP2mydgnza/EtWBMl4+Q4qnQzQBzkLNlRf9QqyIZO0xA9DIJZQSdH4cACSuS5mWKsKYyDZPT6H7BpPjIr7pg5xZbXnd0xzSfH3cNJBHHlJzt1QuamM4kKWGgNbnFkdEGdJcHyrIAbbkAC9vBMcIRLR8/xezguJg4YwU1NrKwQx6RtWqPCau/hCfwV601c5Xp4PXdBqQ2nGI4mv76ewuw1uUAMBiRQxMULe4tUg==">
+    <cfdi:Emisor Rfc="AAA010101AAA" Nombre="EMPRESA EJEMPLO SA DE CV" RegimenFiscal="601"/>
+    <cfdi:Receptor Rfc="XAXX010101000" Nombre="PUBLICO EN GENERAL" DomicilioFiscalReceptor="06600" RegimenFiscalReceptor="616" UsoCFDI="S01"/>
+    <cfdi:Conceptos>
+        <cfdi:Concepto ClaveProdServ="01010101" Cantidad="1" ClaveUnidad="E48" Unidad="Pieza"
+            Descripcion="Producto de ejemplo" ValorUnitario="1000.00" Importe="1000.00"
+            Descuento="0.00" ObjetoImp="02">
+            <cfdi:Impuestos>
+                <cfdi:Traslados>
+                    <cfdi:Traslado Base="1000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="160.00"/>
+                </cfdi:Traslados>
+            </cfdi:Impuestos>
+        </cfdi:Concepto>
+    </cfdi:Conceptos>
+    <cfdi:Impuestos TotalImpuestosTrasladados="160.00">
+        <cfdi:Traslados>
+            <cfdi:Traslado Base="1000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="160.00"/>
+        </cfdi:Traslados>
+    </cfdi:Impuestos>
+</cfdi:Comprobante>

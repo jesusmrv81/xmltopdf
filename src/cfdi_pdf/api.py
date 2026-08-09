@@ -38,6 +38,7 @@ class CFDIPDF:
         locale: str = "es_MX",
         currency_format: bool = True,
         custom_template_paths: list[str | Path] | None = None,
+        validate_xsd: bool = False,
     ) -> None:
         """
         Initialize CFDIPDF converter.
@@ -47,12 +48,14 @@ class CFDIPDF:
             locale: Locale for formatting (default: "es_MX")
             currency_format: Whether to format currencies
             custom_template_paths: Additional paths to search for templates
+            validate_xsd: If True, validate the CFDI against the official SAT
+                XSD schema (cfdv40.xsd) during parsing.
         """
         self._template = template
         self._locale = locale
         self._currency_format = currency_format
 
-        self._parser = CFDIParser()
+        self._parser = CFDIParser(validate_xsd=validate_xsd)
         self._qr_generator = SATQRGenerator()
 
         template_paths = [Path(p) for p in custom_template_paths] if custom_template_paths else None
@@ -187,6 +190,47 @@ class CFDIPDF:
             xml_path = Path(xml_path)
             logger.info("Parsing XML: %s", xml_path)
             cfdi = self._parser.parse_file(xml_path)
+
+            template_name = template or self._template
+            pdf_bytes = self._render_engine.render(
+                cfdi=cfdi,
+                template_name=template_name,
+                output_path=None,
+                logo_path=logo_path,
+            )
+
+            filename = self._uuid_filename(cfdi)
+            return pdf_bytes, filename
+
+        except CFDIPDFError:
+            raise
+        except Exception as exc:
+            raise CFDIPDFError(f"Failed to render PDF: {exc}") from exc
+
+    def render_bytes_from_string(
+        self,
+        xml_content: str,
+        template: str | None = None,
+        logo_path: str | Path | None = None,
+    ) -> tuple[bytes, str]:
+        """
+        Render CFDI XML string to PDF bytes without writing to disk.
+
+        Args:
+            xml_content: XML content as string
+            template: Template name (overrides default)
+            logo_path: Path to logo image (optional)
+
+        Returns:
+            Tuple of (pdf_bytes, uuid_filename) where uuid_filename is
+            the recommended filename, e.g. ``"a1b2c3...-uuid.pdf"``.
+
+        Raises:
+            CFDIPDFError: If rendering fails
+        """
+        try:
+            logger.info("Parsing XML string")
+            cfdi = self._parser.parse_string(xml_content)
 
             template_name = template or self._template
             pdf_bytes = self._render_engine.render(

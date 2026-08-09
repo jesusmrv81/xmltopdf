@@ -1,0 +1,113 @@
+{% if cfdi.carta_porte %}
+<section class="cartaporte-section">
+    <h3>Complemento de Carta Porte</h3>
+    <div class="fiscal-bar">
+        <div class="fiscal-item">
+            <span class="fiscal-label">Id CCP</span>
+            <span class="fiscal-value">{{ cfdi.carta_porte.id_ccp or '-' }}</span>
+        </div>
+        <div class="fiscal-item">
+            <span class="fiscal-label">Transporte</span>
+            <span class="fiscal-value">{{ cfdi.carta_porte.tipo_de_transporte }}</span>
+        </div>
+        <div class="fiscal-item">
+            <span class="fiscal-label">Fecha Expedición</span>
+            <span class="fiscal-value">{{ format_date(cfdi.carta_porte.fecha_expedicion) }}</span>
+        </div>
+        <div class="fiscal-item">
+            <span class="fiscal-label">Internacional</span>
+            <span class="fiscal-value">{{ cfdi.carta_porte.trans_internacional }}</span>
+        </div>
+    </div>
+
+    {% if cfdi.carta_porte.ubicaciones %}
+    <div class="pago-compact" style="page-break-inside: avoid; break-inside: avoid;">
+        <table class="doctos-compact">
+            <thead>
+                <tr>
+                    <th>Estación</th>
+                    <th>Domicilio</th>
+                    <th style="width:55px;">Dist.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in cfdi.carta_porte.ubicaciones.ubicacion %}
+                <tr>
+                    <td style="font-weight:600;">{{ u.tipo_estacion }}</td>
+                    <td>
+                        {% if u.domicilio %}
+                            {{ u.domicilio.calle }} {{ u.domicilio.numero_exterior or '' }}{% if u.domicilio.colonia %}, {{ u.domicilio.colonia }}{% endif %}{% if u.domicilio.municipio %}, {{ u.domicilio.municipio }}{% endif %}, {{ u.domicilio.estado }} {{ u.domicilio.codigo_postal }}
+                        {% else %}
+                            {{ u.nombre_estacion or '-' }}
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">{{ format_number(u.dist_recorrida, 2) if u.dist_recorrida else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if cfdi.carta_porte.mercancias %}
+    <div class="pago-compact" style="page-break-inside: avoid; break-inside: avoid;">
+        <table class="doctos-compact">
+            <thead>
+                <tr>
+                    <th>Mercancía</th>
+                    <th style="width:45px;">Cant.</th>
+                    <th style="width:75px;">Peso</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in cfdi.carta_porte.mercancias.mercancia %}
+                <tr>
+                    <td>{{ m.descripcion }}</td>
+                    <td style="text-align:center;">{{ format_number(m.cantidad, 2) }}</td>
+                    <td style="text-align:right;">{{ format_number(m.peso_en_kg, 2) if m.peso_en_kg else '-' }} kg</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin-top:4px;">
+            <div class="fiscal-bar">
+                <div class="fiscal-item">
+                    <span class="fiscal-label">Peso Bruto Total</span>
+                    <span class="fiscal-value">{{ format_number(cfdi.carta_porte.mercancias.peso_bruto_total, 2) }} {{ cfdi.carta_porte.mercancias.unidad_peso }}</span>
+                </div>
+                {% if cfdi.carta_porte.mercancias.autotransporte %}
+                <div class="fiscal-item">
+                    <span class="fiscal-label">Permiso SCT</span>
+                    <span class="fiscal-value">{{ cfdi.carta_porte.mercancias.autotransporte.num_permiso_sct }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if cfdi.carta_porte.figura_transporte %}
+    <div class="pago-compact" style="page-break-inside: avoid; break-inside: avoid;">
+        <table class="doctos-compact">
+            <thead>
+                <tr>
+                    <th>Figura</th>
+                    <th>RFC</th>
+                    <th>Licencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in cfdi.carta_porte.figura_transporte.figura %}
+                <tr>
+                    <td>{{ f.nombre_figura or f.tipo_figura }}</td>
+                    <td>{{ f.rfc_figura or '-' }}</td>
+                    <td>{{ f.num_licencia or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</section>
+{% endif %}

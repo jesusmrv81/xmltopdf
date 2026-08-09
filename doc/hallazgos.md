@@ -157,6 +157,17 @@ impacto, fix sugerido y **estado** (✅ implementado en `develop` / ⬜ pendient
   regla `G` de ruff.
 - **Fix**: `logger.warning("Custom template path does not exist: %s", path)`.
 
+### H12. `cfdi-pdf --list-templates` fallaba sin argumentos — ✅ Implementado
+
+- **Dónde**: `src/cfdi_pdf/cli.py` (argumento `files` con `nargs="+"`).
+- **Problema**: `files` era requerido, así que `cfdi-pdf --list-templates`
+  (documentado en el README) terminaba con `error: the following arguments
+  are required: XML` (exit 2) antes de llegar al bloque de listado.
+- **Fix**: `files` ahora es `nargs="*"`; si no hay archivos ni
+  `--list-templates`, se llama a `parser.error()` con un mensaje claro.
+  Añadida la suite `tests/test_cli.py` que cubre este flujo (cli.py pasó de
+  0% de cobertura).
+
 ### H9. README desactualizado en requisitos de lxml
 
 - **Dónde**: `README.md:296` dice `lxml >= 4.9.0`; `pyproject.toml:46` exige

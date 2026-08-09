@@ -1,0 +1,93 @@
+{% if cfdi.nomina %}
+<section class="nomina-section">
+    <h3>Complemento de Nómina</h3>
+    <div class="fiscal-bar">
+        <div class="fiscal-item">
+            <span class="fiscal-label">Tipo</span>
+            <span class="fiscal-value">{{ 'Ingreso' if cfdi.nomina.tipo_nomina == 'I' else 'Egreso' }}</span>
+        </div>
+        <div class="fiscal-item">
+            <span class="fiscal-label">Periodo</span>
+            <span class="fiscal-value">{{ format_date(cfdi.nomina.fecha_inicial_pago) }} → {{ format_date(cfdi.nomina.fecha_final_pago) }}</span>
+        </div>
+        <div class="fiscal-item">
+            <span class="fiscal-label">Fecha de Pago</span>
+            <span class="fiscal-value">{{ format_date(cfdi.nomina.fecha_pago) }}</span>
+        </div>
+        <div class="fiscal-item">
+            <span class="fiscal-label">Días Pagados</span>
+            <span class="fiscal-value">{{ format_number(cfdi.nomina.num_dias_pagados, 2) }}</span>
+        </div>
+    </div>
+
+    <div class="pago-compact" style="page-break-inside: avoid; break-inside: avoid;">
+        <table class="pago-header-table">
+            <tr>
+                <td><span class="fiscal-label">Empleado</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ cfdi.receptor.nombre }}</span></td>
+                <td><span class="fiscal-label">No. Empleado</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ cfdi.nomina.receptor.num_empleado }}</span></td>
+                <td><span class="fiscal-label">Puesto</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ cfdi.nomina.receptor.puesto or '-' }}</span></td>
+                <td style="text-align:right;"><span class="fiscal-label">Salario Diario</span><br><span class="fiscal-value" style="font-size:8pt;font-weight:600;">{{ format_currency(cfdi.nomina.receptor.salario_diario_integrado, moneda, include_symbol=false) if cfdi.nomina.receptor.salario_diario_integrado else '-' }}</span></td>
+            </tr>
+        </table>
+
+        {% if cfdi.nomina.percepciones and cfdi.nomina.percepciones.percepcion %}
+        <table class="doctos-compact">
+            <thead>
+                <tr>
+                    <th>Percepción</th>
+                    <th style="width:45px;">Clave</th>
+                    <th style="width:70px;">Gravado</th>
+                    <th style="width:70px;">Exento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in cfdi.nomina.percepciones.percepcion %}
+                <tr>
+                    <td>{{ p.concepto }}</td>
+                    <td style="text-align:center;">{{ p.clave }}</td>
+                    <td style="text-align:right;">{{ format_currency(p.importe_gravado, moneda, include_symbol=false) }}</td>
+                    <td style="text-align:right;">{{ format_currency(p.importe_exento, moneda, include_symbol=false) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if cfdi.nomina.deducciones and cfdi.nomina.deducciones.deduccion %}
+        <table class="doctos-compact">
+            <thead>
+                <tr>
+                    <th>Deducción</th>
+                    <th style="width:45px;">Clave</th>
+                    <th style="width:80px;">Importe</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in cfdi.nomina.deducciones.deduccion %}
+                <tr>
+                    <td>{{ d.concepto }}</td>
+                    <td style="text-align:center;">{{ d.clave }}</td>
+                    <td style="text-align:right;">-{{ format_currency(d.importe, moneda, include_symbol=false) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+
+    <div class="totals-grid">
+        <div class="total-row">
+            <span class="total-label">Total Percepciones</span>
+            <span class="total-value">{{ format_currency(cfdi.nomina.total_percepciones, moneda, include_symbol=false) if cfdi.nomina.total_percepciones else '-' }}</span>
+        </div>
+        <div class="total-row">
+            <span class="total-label">Total Deducciones</span>
+            <span class="total-value">-{{ format_currency(cfdi.nomina.total_deducciones, moneda, include_symbol=false) if cfdi.nomina.total_deducciones else '-' }}</span>
+        </div>
+        <div class="total-row total-final">
+            <span class="total-label">Líquido</span>
+            <span class="total-value">{{ format_currency((cfdi.nomina.total_percepciones or 0) - (cfdi.nomina.total_deducciones or 0), moneda, include_symbol=false) }}</span>
+        </div>
+    </div>
+</section>
+{% endif %}

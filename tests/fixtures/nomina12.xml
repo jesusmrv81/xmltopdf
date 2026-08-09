@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante
+    xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+    xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital"
+    xmlns:nomina12="http://www.sat.gob.mx/nomina12"
+    Version="4.0"
+    Fecha="2024-01-15T10:30:00"
+    SubTotal="1000.00"
+    Moneda="XXX"
+    Total="1000.00"
+    TipoDeComprobante="N"
+    Exportacion="01"
+    LugarExpedicion="06600"
+    NoCertificado="30001000000400002495"
+    Certificado="MIIE...">
+    <cfdi:Emisor
+        Rfc="AAA010101AAA"
+        Nombre="EMPRESA EJEMPLO SA DE CV"
+        RegimenFiscal="601"/>
+    <cfdi:Receptor
+        Rfc="XAXX010101000"
+        Nombre="JUAN PEREZ"
+        DomicilioFiscalReceptor="06600"
+        RegimenFiscalReceptor="605"
+        UsoCFDI="S01"/>
+    <cfdi:Conceptos>
+        <cfdi:Concepto
+            ClaveProdServ="84111505"
+            Cantidad="1"
+            ClaveUnidad="ACT"
+            Descripcion="Nómina"
+            ValorUnitario="1000.00"
+            Importe="1000.00"
+            ObjetoImp="01"/>
+    </cfdi:Conceptos>
+    <cfdi:Complemento>
+        <nomina12:Nomina Version="1.2" TipoNomina="O"
+            FechaPago="2024-01-15" FechaInicialPago="2024-01-01" FechaFinalPago="2024-01-15"
+            NumDiasPagados="15" TotalPercepciones="1000.00" TotalDeducciones="100.00" TotalOtrosPagos="0.00">
+            <nomina12:Emisor RegistroPatronal="PAT12345"/>
+            <nomina12:Receptor NumSeguridadSocial="12345678901" FechaInicioRelLaboral="2020-01-01"
+                Antigüedad="P1461D" TipoContrato="01" TipoJornada="01" TipoRegimen="02"
+                NumEmpleado="001" Departamento="Ventas" Puesto="Vendedor" RiesgoPuesto="1"
+                PeriodicidadPago="04" Banco="002" ClaveBanco="002"
+                SalarioBaseCotApor="100.00" SalarioDiarioIntegrado="110.00"/>
+            <nomina12:Percepciones TotalSueldos="1000.00" TotalGravado="800.00" TotalExento="200.00">
+                <nomina12:Percepcion TipoPercepcion="001" Clave="P001" Concepto="Sueldo"
+                    ImporteGravado="800.00" ImporteExento="200.00"/>
+            </nomina12:Percepciones>
+            <nomina12:Deducciones TotalOtrasDeducciones="50.00" TotalImpuestosRetenidos="50.00">
+                <nomina12:Deduccion TipoDeduccion="002" Clave="D001" Concepto="ISR" Importe="50.00"/>
+                <nomina12:Deduccion TipoDeduccion="101" Clave="D002" Concepto="Cuota IMSS" Importe="50.00"/>
+            </nomina12:Deducciones>
+            <nomina12:OtrosPagos>
+                <nomina12:OtroPago TipoOtroPago="999" Clave="O001" Concepto="Ajuste" Importe="0.00"/>
+            </nomina12:OtrosPagos>
+        </nomina12:Nomina>
+        <tfd:TimbreFiscalDigital
+            Version="1.1"
+            UUID="AB2D4680-1111-2222-3333-444455556666"
+            FechaTimbrado="2024-01-15T10:35:00"
+            RfcProvCertif="SPR190613I52"
+            SelloCFD="abc123def456ghi789jkl012mno345pqr678stu901vwx234"
+            SelloSAT="xyz789abc456def012ghi345jkl678mno901pqr234stu567"
+            NoCertificadoSAT="00001000000504465028"/>
+    </cfdi:Complemento>
+</cfdi:Comprobante>

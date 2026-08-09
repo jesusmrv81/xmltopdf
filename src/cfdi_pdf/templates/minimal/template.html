@@ -224,6 +224,9 @@
         </section>
         {% endif %}
 
+        {% include "_partials/nomina.html" %}
+        {% include "_partials/carta_porte.html" %}
+
         <!-- Totals (hidden for payment complements) -->
         {% if cfdi.tipo_comprobante != 'P' %}
         <section class="totals">

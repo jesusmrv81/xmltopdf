@@ -3,51 +3,48 @@
 Organizadas por horizonte temporal. Las que resuelven hallazgos de
 [hallazgos.md](hallazgos.md) están marcadas con `[H#]`.
 
+> **Actualización (2026-08-09)**: implementados los items 1, 2, 3 (cadena
+> original oficial + XSLT, validación XSD y Nómina/Carta Porte), los hallazgos
+> H1–H8 y H11, y los tests de CLI (item 6). Ver estado en cada sección.
+
 ## Corto plazo (alta prioridad, bajo esfuerzo)
 
-1. **[H1] Corregir la cadena original del TFD**
-   Quitar `SelloSAT` y respetar el orden oficial. Agregar test que compare con
-   la cadena esperada del SAT para un XML conocido.
+1. ✅ **[H1] Cadena original del TFD** — ahora se genera con la XSLT oficial
+   `cadenaoriginal_TFD_1_1.xslt` (empaquetada). Además se añadió la cadena
+   completa del comprobante (`cadenaoriginal_4_0.xslt`) y `SelloVerifier`.
 
-2. **[H3/H7] Unificar la versión**
-   Fuente única en `pyproject.toml` + `importlib.metadata` en runtime. Evita
-   el desfase actual (0.1.3 vs 0.1.0).
+2. ✅ **[H3/H7] Unificar la versión**
+   Fuente única en `pyproject.toml` + `importlib.metadata` en runtime.
 
-3. **[H4] Arreglar el job de `pip-audit` en CI**
-   Instalar `pip-tools` o auditar el entorno instalado. Considerar auditar
-   también en PRs (no solo en `main`).
+3. ✅ **[H4] Arreglar el job de `pip-audit` en CI**
+   Instala `pip-tools` y audita los requisitos compilados.
 
-4. **[H2] Volver opcionales `EquivalenciaDR` y `TipoCambioP`**
-   Cambiar parser + modelos + templates (usar `format_number(tipo_cambio_p, 4)
-   if pago.tipo_cambio_p else "-"` en el template de pagos).
+4. ✅ **[H2] Volver opcionales `EquivalenciaDR` y `TipoCambioP`**
+   Modelos `Decimal | None` + templates que muestran `1` cuando faltan.
 
-5. **[H5/H6] Robustez del parser de Pagos**
-   Helper `_get_int` para `NumParcialidad`; lanzar `InvalidCFDIError` si hay
-   `Pagos` sin `Totales` en vez de descartar silenciosamente.
+5. ✅ **[H5/H6] Robustez del parser de Pagos**
+   Helper `_get_int` para `NumParcialidad`; `Pagos` sin `Totales` lanzan
+   `InvalidCFDIError`.
 
-6. **Tests para la CLI** (`tests/test_cli.py`)
-   Actualmente `cli.py` tiene **0% de cobertura** y es la única pieza sin
-   tests. Cubrir: conversión simple, batch, `--list-templates`, `--version`,
-   error de archivo inexistente, código de salida.
+6. ✅ **Tests para la CLI** (`tests/test_cli.py`)
+   `cli.py` ahora tiene cobertura: conversión simple, batch, `--list-templates`,
+   `--version`, archivo inexistente e XML inválido. Se corrigió además el bug
+   de `--list-templates` sin argumentos (exit 2).
 
 ## Medio plazo
 
-7. **[H11] Tratar CFDI tipo `P` con atributos opcionales**
-   `Certificado`, `DomicilioFiscalReceptor`, `UsoCFDI` opcionales cuando
-   `TipoDeComprobante == "P"`, según el XSD.
+7. ✅ **[H11] Tratar CFDI tipo `P` con atributos opcionales**
+   `Certificado` opcional cuando `TipoDeComprobante == "P"`, según el XSD.
 
 8. **Validación de catálogos SAT en parse-time**
-   Opción `validate_catalogs: bool = False` que valide las claves de catálogos
-   (moneda, forma pago, uso CFDI…) contra los catálogos oficiales, con errores
-   informativos. La descripción `"Desconocido (clave)"` ya da tolerancia, pero
-   la validación explícita ayuda a detectar CFDIs corruptos.
+   Parcialmente cubierto por `validate_xsd=True` (valida contra el XSD oficial,
+   que incluye los catálogos). Pendiente: modo que solo valide catálogos sin
+   exigir el esquema completo.
 
-9. **Soporte de complementos comunes (parcial)**
-   El `_parse_complementos` convierte todo a `dict` genérico. Dar modelos
-   tipados para los más usados:
-   - **Nómina 1.2** (roadmap del README)
-   - **Carta Porte 3.1** (roadmap del README)
-   - **IEPS / LeyendasFiscales / InformaciónGlobal**
+9. **Soporte de complementos comunes**
+   ✅ Nómina 1.2 y Carta Porte 3.1 (modelos + parser + templates).
+   Pendiente: **IEPS / LeyendasFiscales / InformaciónGlobal** (siguen como
+   `dict` genérico en `cfdi.complementos`).
 
 10. **Formatear fechas con zona horaria**
     `Formatters.format_date` no maneja offset (`2024-01-15T10:30:00-06:00`).
@@ -61,13 +58,12 @@ Organizadas por horizonte temporal. Las que resuelven hallazgos de
 
 ## Largo plazo / roadmap
 
-12. **Validación contra XSD del SAT**
-    Empacar `cfdv40.xsd` + `cadenaoriginal_TFD_1_1.xslt` como recursos del
-    paquete y ofrecer `validate=True` (roadmap del README). Resuelve H1 de raíz.
+12. ✅ **Validación contra XSD del SAT**
+    `cfdv40.xsd` + catálogos empaquetados; `validate_xsd=True` en parser y API.
 
-13. **API REST / servidor**
-    El README lo lista en roadmap. Con `render_bytes()` la capa HTTP sería
-    mínima (FastAPI con endpoint POST de XML → PDF).
+13. ✅ **API REST / servidor** — implementado como patrón de integración
+    (`examples/fastapi_service.py`) + `render_bytes_from_string()`. La librería
+    **sigue siendo pura** (cero dependencias web).
 
 14. **Rendimiento**
     - `CFDIPDF` actualmente crea `CFDIParser`, `SATQRGenerator`,

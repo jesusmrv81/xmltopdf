@@ -3,6 +3,7 @@
 from importlib.metadata import PackageNotFoundError, version
 
 from .api import CFDIPDF
+from .crypto import SelloVerifier
 from .exceptions import (
     CFDIPDFError,
     InvalidCFDIError,
@@ -25,6 +26,7 @@ __all__ = [
     "InvalidCFDIError",
     "InvalidSATQRError",
     "PDFGenerationError",
+    "SelloVerifier",
     "TemplateNotFoundError",
     "TemplateRenderError",
     "UTF8SanitizationError",

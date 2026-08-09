@@ -4,9 +4,11 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
+from .carta_porte import CartaPorte
 from .concepto import Concepto
 from .emisor import Emisor
 from .impuestos import ImpuestosComprobante
+from .nomina import Nomina
 from .pagos import Pagos
 from .receptor import Receptor
 from .timbre import TimbreFiscalDigital
@@ -48,6 +50,15 @@ class CFDI(BaseModel):
     timbre_fiscal: TimbreFiscalDigital | None = Field(None, description="Timbre Fiscal Digital")
 
     pagos: Pagos | None = Field(None, description="Complemento de Pago 2.0")
+
+    nomina: Nomina | None = Field(None, description="Complemento de Nómina 1.2")
+
+    carta_porte: CartaPorte | None = Field(None, description="Complemento de Carta Porte 3.1")
+
+    cadena_original: str | None = Field(
+        None,
+        description="Cadena original del comprobante (XSLT oficial cadenaoriginal_4_0.xslt)",
+    )
 
     complementos: dict[str, dict[str, object]] = Field(
         default_factory=dict,

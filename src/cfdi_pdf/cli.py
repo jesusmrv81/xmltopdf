@@ -57,7 +57,7 @@ Ejemplos:
 
     parser.add_argument(
         "files",
-        nargs="+",
+        nargs="*",
         type=Path,
         metavar="XML",
         help="Archivo(s) CFDI XML a convertir",
@@ -116,6 +116,9 @@ Ejemplos:
         return 0
 
     xml_files: list[Path] = args.files
+
+    if not xml_files:
+        parser.error("se requiere al menos un archivo XML (o usa --list-templates)")
 
     # ── initialize converter ──────────────────────────────────────────────────
     try:

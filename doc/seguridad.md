@@ -60,6 +60,8 @@ endurecimiento.
 
 1. **Fijar `recover=False`** (o gestionar explícitamente los errores
    recuperados). Más seguridad > tolerancia para este caso de uso fiscal.
+   *(La validación XSD con `validate_xsd=True` ya mitiga el impacto de XMLs
+   corruptos que parsearían "exitosamente".)*
 2. **Limitar tamaño máximo de XML** antes de parsear (p.ej. 10 MB) para blindar
    contra DoS de memoria más allá de `huge_tree=False` (que protege el árbol,
    no el input completo).
@@ -74,6 +76,17 @@ endurecimiento.
 6. **Revisar `SECURITY.md`** existente: tiene proceso de reporte; añadir una
    sección de "superficie de ataque" para consumidores que integren la lib con
    XML no confiable.
+
+## Validación de integridad disponible
+
+- **Cadena original**: el parser calcula la cadena del comprobante y del TFD
+  con los XSLT oficiales del SAT (`cfdi_pdf/sat/cadena_original.py`).
+- **Verificación de sellos**: `SelloVerifier.verify_sello_cfd` (certificado
+  embebido) y `SelloVerifier.verify_sello_sat` (certificado SAT provisto por el
+  usuario). La verificación de `SelloSAT` no viene "de fábrica" porque el
+  certificado del SAT no está embebido en el XML; se debe suministrar.
+- **Validación estructural**: `validate_xsd=True` valida contra `cfdv40.xsd`
+  (incluye catálogos oficiales) en el parser y en `CFDIPDF`.
 
 ## Suministro de dependencias
 

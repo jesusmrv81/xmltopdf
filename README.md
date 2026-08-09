@@ -14,6 +14,15 @@ Biblioteca profesional para convertir CFDI 4.0 XML a PDF con templates modernos 
 ## Características
 
 - **CFDI 4.0 Completo**: Soporte total para la versión 4.0 del SAT
+- **Cadena original oficial**: genera la cadena original con los XSLT del SAT
+  (`cadenaoriginal_4_0.xslt` y `cadenaoriginal_TFD_1_1.xslt` empaquetados)
+- **Verificación de sellos**: `SelloVerifier` valida `SelloCFD` (certificado
+  embebido) y `SelloSAT` (cert SAT) contra la cadena original
+- **Validación XSD**: `validate_xsd=True` valida contra el esquema oficial
+  `cfdv40.xsd` (catálogos incluidos)
+- **Complemento de Pago 2.0**: modelos, parser y render dedicados
+- **Complemento de Nómina 1.2**: modelos, parser y render dedicados
+- **Complemento de Carta Porte 3.1**: modelos, parser y render dedicados
 - **Tamaño carta**: Todos los templates generan PDFs en tamaño carta (estándar SAT México)
 - **Nombre por UUID**: El archivo PDF siempre se nombra `{uuid}.pdf` para trazabilidad
 - **QR SAT Oficial**: Generación del código QR con especificaciones oficiales
@@ -115,6 +124,26 @@ with open(filename, "wb") as f:
     f.write(pdf_bytes)
 ```
 
+### Desde string XML y obtener bytes (sin disco)
+
+```python
+from cfdi_pdf import CFDIPDF
+
+pdf = CFDIPDF()
+
+with open("factura.xml") as f:
+    xml_content = f.read()
+
+# Retorna (bytes, nombre_archivo) sin tocar el sistema de archivos
+pdf_bytes, filename = pdf.render_bytes_from_string(xml_content)
+
+# Ideal para exponer la librería detrás de un framework web (FastAPI, etc.)
+```
+
+> La librería es 100% pura: no depende de ningún framework web. Para usarla en
+> un microservicio, ver el adaptador de ejemplo en
+> `examples/fastapi_service.py`.
+
 ## Templates Disponibles
 
 | Template | Descripción | Compatibilidad |
@@ -152,6 +181,7 @@ CFDIPDF(
     locale: str = "es_MX",
     currency_format: bool = True,
     custom_template_paths: list[str | Path] | None = None,
+    validate_xsd: bool = False,
 )
 ```
 
@@ -160,12 +190,41 @@ CFDIPDF(
 | `render(xml_path, output_dir, template, logo_path)` | Convierte XML a PDF, guarda en disco | `Path` al PDF |
 | `render_from_string(xml_content, output_dir, template, logo_path)` | Igual pero desde string | `Path` al PDF |
 | `render_bytes(xml_path, template, logo_path)` | Sin escribir a disco | `(bytes, filename)` |
+| `render_bytes_from_string(xml_content, template, logo_path)` | Desde string, sin escribir a disco | `(bytes, filename)` |
 | `parse(xml_path)` | Parsea XML sin generar PDF | `CFDI` |
 | `parse_string(xml_content)` | Parsea string XML | `CFDI` |
 | `list_templates()` | Lista templates disponibles | `list[str]` |
 
 > **Nota**: El nombre del archivo siempre es `{uuid}.pdf` (UUID en minúsculas del
 > timbre fiscal). Si el CFDI no tiene timbre fiscal, se lanza `CFDIPDFError`.
+
+### Cadena original, sellos y validación XSD
+
+El parser calcula la **cadena original** del comprobante y del timbre con los
+XSLT oficiales del SAT (`cadenaoriginal_4_0.xslt` y `cadenaoriginal_TFD_1_1.xslt`,
+empaquetados en `cfdi_pdf/xslt/`).
+
+```python
+from cfdi_pdf import CFDIPDF, SelloVerifier
+
+pdf = CFDIPDF(validate_xsd=True)  # valida contra cfdv40.xsd durante el parseo
+cfdi = pdf.parse("factura.xml")
+
+print(cfdi.cadena_original)          # cadena original del comprobante
+print(cfdi.timbre_fiscal.cadena_origen)  # cadena original del TFD
+
+# Verificar la firma del emisor contra su certificado embebido
+if SelloVerifier.verify_sello_cfd(cfdi):
+    print("✓ SelloCFD válido")
+
+# Verificar la firma del SAT (requiere el certificado del SAT, identificado
+# por NoCertificadoSAT)
+if SelloVerifier.verify_sello_sat(cfdi, sat_certificate_pem):
+    print("✓ SelloSAT válido")
+```
+
+> **Nota**: la verificación de `SelloSAT` requiere el certificado X.509 del SAT
+> (no viene embebido en el XML); indícalo con `NoCertificadoSAT`.
 
 ### Variables disponibles en templates Jinja2
 
@@ -254,16 +313,22 @@ src/cfdi_pdf/
 ├── api.py              # API principal (CFDIPDF)
 ├── cli.py              # Interfaz de línea de comandos
 ├── exceptions.py       # Excepciones personalizadas
+├── crypto/             # Verificación de sellos
+│   └── verifier.py     #   SelloVerifier (RSA/SHA-256)
 ├── models/             # Modelos Pydantic v2
 │   ├── cfdi.py
 │   ├── emisor.py
 │   ├── receptor.py
 │   ├── concepto.py
 │   ├── impuestos.py
-│   └── timbre.py
+│   ├── timbre.py
+│   ├── pagos.py        #   Complemento de Pago 2.0
+│   ├── nomina.py       #   Complemento de Nómina 1.2
+│   └── carta_porte.py  #   Complemento de Carta Porte 3.1
 ├── parser/             # Parser XML seguro
 │   ├── xml_parser.py
-│   └── sanitizer.py
+│   ├── sanitizer.py
+│   └── xsd_validator.py #  Validación contra cfdv40.xsd
 ├── qr/                 # Generador QR SAT oficial
 │   └── generator.py
 ├── render/             # Motor de renderizado
@@ -271,9 +336,12 @@ src/cfdi_pdf/
 │   └── template.py
 ├── sat/                # Catálogos SAT
 │   ├── catalogs.py
-│   └── helpers.py
+│   ├── helpers.py
+│   └── cadena_original.py  # XSLT oficiales
 ├── utils/              # Utilidades
 │   └── formatters.py
+├── xslt/               # XSLT oficiales del SAT (cadena original)
+├── xsd/                # Esquemas oficiales (cfdv40, catálogos)
 └── templates/          # Templates incluidos
     ├── minimal/
     │   ├── template.html
@@ -294,7 +362,8 @@ src/cfdi_pdf/
 - **Jinja2** >= 3.1.0
 - **qrcode** >= 7.4
 - **Pillow** >= 10.0.0
-- **lxml** >= 4.9.0
+- **lxml** >= 5.0.0
+- **cryptography** >= 41.0.0
 
 ## Desarrollo
 
@@ -377,11 +446,13 @@ Los templates evitan intencionalmente propiedades CSS experimentales para máxim
 
 ## Roadmap
 
-- [ ] Soporte para complemento Pagos 2.0
-- [ ] Soporte para complemento Nómina 1.2
-- [ ] Soporte para Carta Porte 3.1
-- [ ] Validación contra esquemas XSD del SAT
-- [ ] API REST lista para deploy
+- [x] Soporte para complemento Pagos 2.0
+- [x] Soporte para complemento Nómina 1.2
+- [x] Soporte para complemento Carta Porte 3.1 (subconjunto esencial)
+- [x] Cadena original oficial del SAT (XSLT) y validación contra esquemas XSD
+- [ ] Validación de sellos contra el SAT (verificación completa SelloSAT con
+      certificados del SAT actualizados)
+- [ ] API REST lista para deploy (ver ejemplo `examples/fastapi_service.py`)
 - [ ] Integración con PACs
 
 ## Licencia

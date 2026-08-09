@@ -6,11 +6,11 @@ Estado verificado el 2026-08-09 en la rama `develop` con `venv/`.
 
 | Herramienta | Comando | Resultado |
 |---|---|---|
-| Tests | `pytest` | ✅ **114 passed** (~45 s) |
+| Tests | `pytest` | ✅ **151 passed** (~67 s) |
 | Lint | `ruff check src tests` | ✅ Sin errores |
 | Formato | `ruff format --check .` | ✅ (CI) |
-| Tipos | `mypy src` (strict) | ✅ 25 archivos sin errores |
-| Cobertura | `pytest --cov=cfdi_pdf` | ⚠️ **77%** (umbral CI: 70%) |
+| Tipos | `mypy src` (strict) | ✅ 31 archivos sin errores |
+| Cobertura | `pytest --cov=cfdi_pdf` | ✅ **85%** (umbral CI: 70%) |
 
 ## Cobertura por módulo
 
@@ -31,8 +31,9 @@ Estado verificado el 2026-08-09 en la rama `develop` con `venv/`.
 | `exceptions.py` | 81% | Falta `__str__` con details |
 | **`cli.py`** | **0%** | 🔴 **Sin tests** — prioridad (ver [mejoras.md](mejoras.md#6)) |
 
-> `cli.py` con 0% es la mayor brecha. Como es una pieza pública del paquete
-> (`project.scripts`), debería tener al menos smoke tests.
+> `cli.py` con 0% era la mayor brecha; **ya está cubierto** con `tests/test_cli.py`
+> (conversión simple, batch, `--list-templates`, `--version`, errores).
+> Cobertura global pasó de 77% a 85%.
 
 ## Suites de tests existentes
 
@@ -41,6 +42,12 @@ Estado verificado el 2026-08-09 en la rama `develop` con `venv/`.
 | `test_api.py` | `render`, `render_from_string`, `render_bytes`, `parse`, `list_templates` |
 | `test_parser.py` | parseo de fixtures, errores de XML, CFDI 4.0 |
 | `test_pagos.py` | Complemento de Pago 2.0 (múltiples, retenciones, timbre) |
+| `test_nomina.py` | Complemento de Nómina 1.2 (percepciones, deducciones, render) |
+| `test_carta_porte.py` | Complemento de Carta Porte 3.1 (ubicaciones, mercancías, figuras) |
+| `test_cadena_original.py` | Cadenas originales con XSLT oficial (comprobante, TFD, complementos) |
+| `test_xsd_validation.py` | Validación contra `cfdv40.xsd` (válido/inválido) |
+| `test_verifier.py` | Verificación de sellos RSA/SHA-256 (SelloCFD, SelloSAT, tampering) |
+| `test_cli.py` | CLI: conversión, batch, `--list-templates`, `--version`, errores |
 | `test_qr.py` | generación, total a 6 decimales, validación de inputs |
 | `test_catalogs.py` | catálogos SAT |
 | `test_formatters.py` | moneda, tasa, fecha, UUID |

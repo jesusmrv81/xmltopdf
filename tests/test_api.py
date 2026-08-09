@@ -110,6 +110,16 @@ class TestCFDIPDF:
             assert filename.endswith(".pdf")
             assert len(filename) == 40  # 36 uuid + 4 ".pdf"
 
+    def test_render_bytes_from_string_returns_bytes(self, valid_cfdi_40_xml: str) -> None:
+        """render_bytes_from_string debe retornar (bytes, filename) sin tocar disco."""
+        pdf = CFDIPDF()
+
+        pdf_bytes, filename = pdf.render_bytes_from_string(valid_cfdi_40_xml)
+
+        assert isinstance(pdf_bytes, bytes)
+        assert pdf_bytes.startswith(b"%PDF")
+        assert filename == "cce4d168-1234-5678-9abc-def012345678.pdf"
+
     def test_render_invalid_xml_raises_error(self, invalid_xml: str) -> None:
         """Test that invalid XML raises error."""
         pdf = CFDIPDF()

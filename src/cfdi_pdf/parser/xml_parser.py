@@ -9,15 +9,31 @@ from lxml import etree
 from ..exceptions import InvalidCFDIError, XMLParseError
 from ..models import (
     CFDI,
+    Autotransporte,
+    CartaPorte,
     Concepto,
+    Deduccion,
+    Deducciones,
     DoctoRelacionado,
+    Domicilio,
     Emisor,
+    Figura,
+    FiguraTransporte,
     ImpuestosComprobante,
     ImpuestosConcepto,
     ImpuestosDR,
     ImpuestosP,
+    Mercancia,
+    Mercancias,
+    Nomina,
+    NominaEmisor,
+    NominaReceptor,
+    OtroPago,
+    OtrosPagos,
     Pago,
     Pagos,
+    Percepcion,
+    Percepciones,
     Receptor,
     Retencion,
     RetencionDR,
@@ -27,8 +43,12 @@ from ..models import (
     Traslado,
     TrasladoDR,
     TrasladoP,
+    Ubicacion,
+    Ubicaciones,
 )
+from ..sat.cadena_original import cadena_original_comprobante, cadena_original_tfd
 from .sanitizer import XMLSanitizer
+from .xsd_validator import CFDIXSDValidator
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +56,8 @@ logger = logging.getLogger(__name__)
 CFDI_NS = "http://www.sat.gob.mx/cfd/4"
 TFD_NS = "http://www.sat.gob.mx/TimbreFiscalDigital"
 PAGOS20_NS = "http://www.sat.gob.mx/Pagos20"
+NOMINA12_NS = "http://www.sat.gob.mx/nomina12"
+CARTA_PORTE31_NS = "http://www.sat.gob.mx/CartaPorte31"
 
 NAMESPACES = {
     "cfdi": CFDI_NS,
@@ -46,8 +68,16 @@ NAMESPACES = {
 class CFDIParser:
     """Secure XML parser for CFDI 4.0 documents."""
 
-    def __init__(self) -> None:
-        """Initialize parser with security protections."""
+    def __init__(self, validate_xsd: bool = False) -> None:
+        """
+        Initialize parser with security protections.
+
+        Args:
+            validate_xsd: Si es True, valida el documento contra el esquema
+                XSD oficial del SAT (cfdv40.xsd) durante el parseo.
+        """
+        self._sanitizer = XMLSanitizer()
+        self._xsd_validator = CFDIXSDValidator() if validate_xsd else None
         self._sanitizer = XMLSanitizer()
 
     def parse_file(self, xml_path: str | Path) -> CFDI:
@@ -103,6 +133,9 @@ class CFDIParser:
             raise XMLParseError(f"XML syntax error: {exc}") from exc
         except etree.DocumentInvalid as exc:
             raise XMLParseError(f"XML validation error: {exc}") from exc
+
+        if self._xsd_validator is not None:
+            self._xsd_validator.validate_raise(root)
 
         return self._parse_root(root)
 
@@ -162,7 +195,10 @@ class CFDIParser:
             impuestos=self._parse_impuestos_comprobante(root),
             timbre_fiscal=self._parse_timbre_fiscal(root),
             pagos=self._parse_pagos(root),
+            nomina=self._parse_nomina(root),
+            carta_porte=self._parse_carta_porte(root),
             complementos=self._parse_complementos(root),
+            cadena_original=self._build_cadena_original_comprobante(root),
         )
 
     # ── sub-element parsers ───────────────────────────────────────────────────
@@ -330,23 +366,33 @@ class CFDIParser:
             cadena_origen=self._build_cadena_original(tfd_elem),
         )
 
-    def _build_cadena_original(self, tfd_elem: etree._Element) -> str:
+    def _build_cadena_original(self, tfd_elem: etree._Element) -> str | None:
         """
-        Build cadena original from TFD attributes, matching the official SAT
-        transformation ``cadenaoriginal_TFD_1_1.xslt``.
+        Build cadena original del TFD aplicando la XSLT oficial del SAT
+        ``cadenaoriginal_TFD_1_1.xslt``.
 
-        NOTE: In production, this should use the official SAT XSLT transformation.
-        This is a simplified version for demonstration purposes.
+        Returns:
+            Cadena original del timbre, o None si la transformación falla.
         """
-        parts = [
-            self._get_attr(tfd_elem, "Version"),
-            self._get_attr(tfd_elem, "UUID"),
-            self._get_attr(tfd_elem, "FechaTimbrado"),
-            self._get_attr(tfd_elem, "RfcProvCertif"),
-            self._get_attr(tfd_elem, "SelloCFD"),
-            self._get_attr(tfd_elem, "NoCertificadoSAT"),
-        ]
-        return "||" + "|".join(parts) + "||"
+        try:
+            return cadena_original_tfd(tfd_elem)
+        except Exception as exc:
+            logger.warning("No se pudo generar la cadena original del TFD: %s", exc)
+            return None
+
+    def _build_cadena_original_comprobante(self, root: etree._Element) -> str | None:
+        """
+        Build cadena original del comprobante aplicando la XSLT oficial del SAT
+        ``cadenaoriginal_4_0.xslt`` (incluye los complementos presentes).
+
+        Returns:
+            Cadena original del comprobante, o None si la transformación falla.
+        """
+        try:
+            return cadena_original_comprobante(root)
+        except Exception as exc:
+            logger.warning("No se pudo generar la cadena original del comprobante: %s", exc)
+            return None
 
     def _parse_pagos(self, root: etree._Element) -> Pagos | None:
         """Parse Complemento de Pago 2.0 from Complemento."""
@@ -520,7 +566,13 @@ class CFDIParser:
         complementos: dict[str, dict[str, object]] = {}
 
         for child in complemento_elem:
-            if child.tag.endswith("}TimbreFiscalDigital") or child.tag.endswith("}Pagos"):
+            if child.tag.endswith("}TimbreFiscalDigital"):
+                continue
+            if child.tag.endswith("}Pagos"):
+                continue
+            if child.tag.endswith("}Nomina"):
+                continue
+            if child.tag.endswith("}CartaPorte"):
                 continue
 
             tag = child.tag
@@ -529,6 +581,271 @@ class CFDIParser:
             logger.info("Parsed complemento: %s (partial support)", local_name)
 
         return complementos
+
+    # ── complemento de Nómina 1.2 ─────────────────────────────────────────────
+
+    def _parse_nomina(self, root: etree._Element) -> Nomina | None:
+        """Parse Complemento de Nómina 1.2."""
+        complemento_elem = root.find(f"{{{CFDI_NS}}}Complemento")
+        if complemento_elem is None:
+            return None
+
+        nomina_elem = complemento_elem.find(f"{{{NOMINA12_NS}}}Nomina")
+        if nomina_elem is None:
+            return None
+
+        emisor_elem = nomina_elem.find(f"{{{NOMINA12_NS}}}Emisor")
+        emisor = (
+            NominaEmisor(
+                RegistroPatronal=self._get_optional_attr(emisor_elem, "RegistroPatronal"),
+            )
+            if emisor_elem is not None
+            else None
+        )
+
+        receptor_elem = nomina_elem.find(f"{{{NOMINA12_NS}}}Receptor")
+        if receptor_elem is None:
+            raise InvalidCFDIError("Missing required element: Nomina/Receptor")
+
+        receptor = NominaReceptor(
+            NumSeguridadSocial=self._get_optional_attr(receptor_elem, "NumSeguridadSocial"),
+            FechaInicioRelLaboral=self._get_optional_attr(receptor_elem, "FechaInicioRelLaboral"),
+            Antigüedad=self._get_optional_attr(receptor_elem, "Antigüedad"),
+            ContinuidadLaboral=self._get_optional_attr(receptor_elem, "ContinuidadLaboral"),
+            Sindicalizado=self._get_optional_attr(receptor_elem, "Sindicalizado"),
+            TipoContrato=self._get_attr(receptor_elem, "TipoContrato"),
+            TipoJornada=self._get_optional_attr(receptor_elem, "TipoJornada"),
+            TipoRegimen=self._get_attr(receptor_elem, "TipoRegimen"),
+            NumEmpleado=self._get_attr(receptor_elem, "NumEmpleado"),
+            Departamento=self._get_optional_attr(receptor_elem, "Departamento"),
+            Puesto=self._get_optional_attr(receptor_elem, "Puesto"),
+            RiesgoPuesto=self._get_optional_attr(receptor_elem, "RiesgoPuesto"),
+            PeriodicidadPago=self._get_attr(receptor_elem, "PeriodicidadPago"),
+            Banco=self._get_optional_attr(receptor_elem, "Banco"),
+            ClaveBanco=self._get_optional_attr(receptor_elem, "ClaveBanco"),
+            SalarioBaseCotApor=self._get_optional_decimal(receptor_elem, "SalarioBaseCotApor"),
+            SalarioDiarioIntegrado=self._get_optional_decimal(
+                receptor_elem, "SalarioDiarioIntegrado"
+            ),
+        )
+
+        percepciones = self._parse_percepciones(nomina_elem)
+        deducciones = self._parse_deducciones(nomina_elem)
+        otros_pagos = self._parse_otros_pagos(nomina_elem)
+
+        return Nomina(
+            version=self._get_attr(nomina_elem, "Version"),
+            TipoNomina=self._get_attr(nomina_elem, "TipoNomina"),
+            FechaPago=self._get_attr(nomina_elem, "FechaPago"),
+            FechaInicialPago=self._get_attr(nomina_elem, "FechaInicialPago"),
+            FechaFinalPago=self._get_attr(nomina_elem, "FechaFinalPago"),
+            NumDiasPagados=self._get_decimal(nomina_elem, "NumDiasPagados"),
+            TotalPercepciones=self._get_optional_decimal(nomina_elem, "TotalPercepciones"),
+            TotalDeducciones=self._get_optional_decimal(nomina_elem, "TotalDeducciones"),
+            TotalOtrosPagos=self._get_optional_decimal(nomina_elem, "TotalOtrosPagos"),
+            Emisor=emisor,
+            Receptor=receptor,
+            Percepciones=percepciones,
+            Deducciones=deducciones,
+            OtrosPagos=otros_pagos,
+        )
+
+    def _parse_percepciones(self, nomina_elem: etree._Element) -> Percepciones | None:
+        """Parse Percepciones de la nómina."""
+        percepciones_elem = nomina_elem.find(f"{{{NOMINA12_NS}}}Percepciones")
+        if percepciones_elem is None:
+            return None
+
+        percepciones = [
+            Percepcion(
+                TipoPercepcion=self._get_attr(elem, "TipoPercepcion"),
+                Clave=self._get_attr(elem, "Clave"),
+                Concepto=self._get_attr(elem, "Concepto"),
+                ImporteGravado=self._get_decimal(elem, "ImporteGravado"),
+                ImporteExento=self._get_decimal(elem, "ImporteExento"),
+            )
+            for elem in percepciones_elem.findall(f"{{{NOMINA12_NS}}}Percepcion")
+        ]
+
+        return Percepciones(
+            TotalSueldos=self._get_optional_decimal(percepciones_elem, "TotalSueldos"),
+            TotalSeparacionIndemnizacion=self._get_optional_decimal(
+                percepciones_elem, "TotalSeparacionIndemnizacion"
+            ),
+            TotalJubilacionPensionRetiro=self._get_optional_decimal(
+                percepciones_elem, "TotalJubilacionPensionRetiro"
+            ),
+            TotalGravado=self._get_optional_decimal(percepciones_elem, "TotalGravado"),
+            TotalExento=self._get_optional_decimal(percepciones_elem, "TotalExento"),
+            Percepcion=percepciones,
+        )
+
+    def _parse_deducciones(self, nomina_elem: etree._Element) -> Deducciones | None:
+        """Parse Deducciones de la nómina."""
+        deducciones_elem = nomina_elem.find(f"{{{NOMINA12_NS}}}Deducciones")
+        if deducciones_elem is None:
+            return None
+
+        deducciones = [
+            Deduccion(
+                TipoDeduccion=self._get_attr(elem, "TipoDeduccion"),
+                Clave=self._get_attr(elem, "Clave"),
+                Concepto=self._get_attr(elem, "Concepto"),
+                Importe=self._get_decimal(elem, "Importe"),
+            )
+            for elem in deducciones_elem.findall(f"{{{NOMINA12_NS}}}Deduccion")
+        ]
+
+        return Deducciones(
+            TotalOtrasDeducciones=self._get_optional_decimal(
+                deducciones_elem, "TotalOtrasDeducciones"
+            ),
+            TotalImpuestosRetenidos=self._get_optional_decimal(
+                deducciones_elem, "TotalImpuestosRetenidos"
+            ),
+            Deduccion=deducciones,
+        )
+
+    def _parse_otros_pagos(self, nomina_elem: etree._Element) -> OtrosPagos | None:
+        """Parse OtrosPagos de la nómina."""
+        otros_pagos_elem = nomina_elem.find(f"{{{NOMINA12_NS}}}OtrosPagos")
+        if otros_pagos_elem is None:
+            return None
+
+        otros = [
+            OtroPago(
+                TipoOtroPago=self._get_attr(elem, "TipoOtroPago"),
+                Clave=self._get_attr(elem, "Clave"),
+                Concepto=self._get_attr(elem, "Concepto"),
+                Importe=self._get_decimal(elem, "Importe"),
+                SubsidioAlEmpleo=self._get_optional_decimal(elem, "SubsidioAlEmpleo"),
+            )
+            for elem in otros_pagos_elem.findall(f"{{{NOMINA12_NS}}}OtroPago")
+        ]
+
+        return OtrosPagos(OtroPago=otros)
+
+    # ── complemento de Carta Porte 3.1 ────────────────────────────────────────
+
+    def _parse_carta_porte(self, root: etree._Element) -> CartaPorte | None:
+        """Parse Complemento de Carta Porte 3.1 (subconjunto esencial)."""
+        complemento_elem = root.find(f"{{{CFDI_NS}}}Complemento")
+        if complemento_elem is None:
+            return None
+
+        cp_elem = complemento_elem.find(f"{{{CARTA_PORTE31_NS}}}CartaPorte")
+        if cp_elem is None:
+            return None
+
+        return CartaPorte(
+            version=self._get_attr(cp_elem, "Version"),
+            IdCCP=self._get_optional_attr(cp_elem, "IdCCP"),
+            Serie=self._get_optional_attr(cp_elem, "Serie"),
+            Folio=self._get_optional_attr(cp_elem, "Folio"),
+            FechaExpedicion=self._get_attr(cp_elem, "FechaExpedicion"),
+            TipoDeTransporte=self._get_attr(cp_elem, "TipoDeTransporte"),
+            TransInternacional=self._get_attr(cp_elem, "TransInternacional"),
+            TotalDistRecorrida=self._get_optional_decimal(cp_elem, "TotalDistRecorrida"),
+            Ubicaciones=self._parse_cp_ubicaciones(cp_elem),
+            Mercancias=self._parse_cp_mercancias(cp_elem),
+            FiguraTransporte=self._parse_cp_figura(cp_elem),
+        )
+
+    def _parse_cp_ubicaciones(self, cp_elem: etree._Element) -> Ubicaciones | None:
+        """Parse Ubicaciones de la Carta Porte."""
+        ubicaciones_elem = cp_elem.find(f"{{{CARTA_PORTE31_NS}}}Ubicaciones")
+        if ubicaciones_elem is None:
+            return None
+
+        ubicaciones: list[Ubicacion] = []
+        for elem in ubicaciones_elem.findall(f"{{{CARTA_PORTE31_NS}}}Ubicacion"):
+            domicilio_elem = elem.find(f"{{{CARTA_PORTE31_NS}}}Domicilio")
+            domicilio = (
+                Domicilio(
+                    Calle=self._get_attr(domicilio_elem, "Calle"),
+                    NumeroExterior=self._get_optional_attr(domicilio_elem, "NumeroExterior"),
+                    NumeroInterior=self._get_optional_attr(domicilio_elem, "NumeroInterior"),
+                    Colonia=self._get_optional_attr(domicilio_elem, "Colonia"),
+                    Localidad=self._get_optional_attr(domicilio_elem, "Localidad"),
+                    Municipio=self._get_optional_attr(domicilio_elem, "Municipio"),
+                    Estado=self._get_attr(domicilio_elem, "Estado"),
+                    Pais=self._get_attr(domicilio_elem, "Pais"),
+                    CodigoPostal=self._get_attr(domicilio_elem, "CodigoPostal"),
+                )
+                if domicilio_elem is not None
+                else None
+            )
+
+            ubicaciones.append(
+                Ubicacion(
+                    TipoEstacion=self._get_attr(elem, "TipoEstacion"),
+                    DistRecorrida=self._get_optional_decimal(elem, "DistRecorrida"),
+                    IDUbicacion=self._get_optional_attr(elem, "IDUbicacion"),
+                    RFCRemitenteDestinatario=self._get_optional_attr(
+                        elem, "RFCRemitenteDestinatario"
+                    ),
+                    NombreEstacion=self._get_optional_attr(elem, "NombreEstacion"),
+                    FechaHoraSalidaLlegada=self._get_optional_attr(elem, "FechaHoraSalidaLlegada"),
+                    Domicilio=domicilio,
+                )
+            )
+
+        return Ubicaciones(Ubicacion=ubicaciones)
+
+    def _parse_cp_mercancias(self, cp_elem: etree._Element) -> Mercancias | None:
+        """Parse Mercancias de la Carta Porte."""
+        mercancias_elem = cp_elem.find(f"{{{CARTA_PORTE31_NS}}}Mercancias")
+        if mercancias_elem is None:
+            return None
+
+        mercancias = [
+            Mercancia(
+                BienesTransp=self._get_attr(elem, "BienesTransp"),
+                ClaveSTCC=self._get_attr(elem, "ClaveSTCC"),
+                Descripcion=self._get_attr(elem, "Descripcion"),
+                Cantidad=self._get_decimal(elem, "Cantidad"),
+                ClaveUnidad=self._get_attr(elem, "ClaveUnidad"),
+                MaterialPeligroso=self._get_optional_attr(elem, "MaterialPeligroso"),
+                PesoEnKg=self._get_optional_decimal(elem, "PesoEnKg"),
+            )
+            for elem in mercancias_elem.findall(f"{{{CARTA_PORTE31_NS}}}Mercancia")
+        ]
+
+        autotransporte_elem = mercancias_elem.find(f"{{{CARTA_PORTE31_NS}}}Autotransporte")
+        autotransporte = (
+            Autotransporte(
+                PermisoSCT=self._get_attr(autotransporte_elem, "PermisoSCT"),
+                NumPermisoSCT=self._get_attr(autotransporte_elem, "NumPermisoSCT"),
+            )
+            if autotransporte_elem is not None
+            else None
+        )
+
+        return Mercancias(
+            PesoBrutoTotal=self._get_decimal(mercancias_elem, "PesoBrutoTotal"),
+            UnidadPeso=self._get_attr(mercancias_elem, "UnidadPeso"),
+            NumTotalMercancias=self._get_int(mercancias_elem, "NumTotalMercancias"),
+            Mercancia=mercancias,
+            Autotransporte=autotransporte,
+        )
+
+    def _parse_cp_figura(self, cp_elem: etree._Element) -> FiguraTransporte | None:
+        """Parse FiguraTransporte de la Carta Porte."""
+        figura_elem = cp_elem.find(f"{{{CARTA_PORTE31_NS}}}FiguraTransporte")
+        if figura_elem is None:
+            return None
+
+        figuras = [
+            Figura(
+                TipoFigura=self._get_attr(elem, "TipoFigura"),
+                RFCFigura=self._get_optional_attr(elem, "RFCFigura"),
+                NumLicencia=self._get_optional_attr(elem, "NumLicencia"),
+                NombreFigura=self._get_optional_attr(elem, "NombreFigura"),
+            )
+            for elem in figura_elem.findall(f"{{{CARTA_PORTE31_NS}}}Figura")
+        ]
+
+        return FiguraTransporte(Figura=figuras)
 
     def _element_to_dict(self, elem: etree._Element) -> dict[str, object]:
         """Convert XML element to dictionary (for complementos)."""
