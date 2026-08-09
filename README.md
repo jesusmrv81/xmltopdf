@@ -210,7 +210,7 @@ from cfdi_pdf import CFDIPDF, SelloVerifier
 pdf = CFDIPDF(validate_xsd=True)  # valida contra cfdv40.xsd durante el parseo
 cfdi = pdf.parse("factura.xml")
 
-print(cfdi.cadena_original)          # cadena original del comprobante
+print(cfdi.cadena_original)  # cadena original del comprobante
 print(cfdi.timbre_fiscal.cadena_origen)  # cadena original del TFD
 
 # Verificar la firma del emisor contra su certificado embebido

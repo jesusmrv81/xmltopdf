@@ -72,6 +72,7 @@ impacto, fix sugerido y **estado** (✅ implementado en `develop` / ⬜ pendient
   ```python
   # __init__.py
   from importlib.metadata import version, PackageNotFoundError
+
   try:
       __version__ = version("cfdi-pdf")
   except PackageNotFoundError:
@@ -107,7 +108,7 @@ impacto, fix sugerido y **estado** (✅ implementado en `develop` / ⬜ pendient
 
 - **Dónde**: `src/cfdi_pdf/parser/xml_parser.py:477`.
   ```python
-  NumParcialidad=int(self._get_attr(doc_elem, "NumParcialidad")),
+  NumParcialidad = (int(self._get_attr(doc_elem, "NumParcialidad")),)
   ```
 - **Problema**: Si el atributo no es un entero (o es `"1.0"`), lanza
   `ValueError` crudo, que escapa como excepción genérica en vez de

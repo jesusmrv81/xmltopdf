@@ -147,25 +147,23 @@ Fixes #15
 Ejemplo:
 ```python
 def render_cfdi(
-    xml_path: str | Path,
-    output: str | Path,
-    template: str = "minimal"
+    xml_path: str | Path, output: str | Path, template: str = "minimal"
 ) -> bytes | None:
     """
     Convierte un CFDI XML a PDF.
-    
+
     Args:
         xml_path: Ruta al archivo XML del CFDI.
         output: Ruta de salida del PDF.
         template: Nombre del template a usar.
-    
+
     Returns:
         Bytes del PDF si output es None, None si se guardó a archivo.
-    
+
     Raises:
         XMLParseError: Si el XML es inválido.
         TemplateNotFoundError: Si el template no existe.
-    
+
     Example:
         >>> pdf_bytes = render_cfdi("factura.xml", "factura.pdf")
     """

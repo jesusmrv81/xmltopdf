@@ -23,8 +23,8 @@ Si descubres una vulnerabilidad de seguridad:
 # Parser configurado para prevenir XXE
 parser = etree.XMLParser(
     resolve_entities=False,  # No resuelve entidades externas
-    no_network=True,         # Sin acceso a red
-    dtd_validation=False     # Sin validación DTD
+    no_network=True,  # Sin acceso a red
+    dtd_validation=False,  # Sin validación DTD
 )
 ```
 
@@ -46,7 +46,7 @@ parser = etree.XMLParser(
 # Jinja2 SandboxedEnvironment
 env = SandboxedEnvironment(
     loader=loader,
-    autoescape=True  # Escape automático de HTML
+    autoescape=True,  # Escape automático de HTML
 )
 ```
 
