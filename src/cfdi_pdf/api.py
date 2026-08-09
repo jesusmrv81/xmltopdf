@@ -260,6 +260,25 @@ class CFDIPDF:
         """List all available templates."""
         return self._template_manager.list_templates()
 
+    def ensure_resources(self, all_resources: bool = False) -> None:
+        """
+        Predescarga los recursos oficiales del SAT (XSLT de la cadena original
+        y, opcionalmente, los XSD de validación).
+
+        Útil para entornos sin red o deploys: una vez descargados, quedan
+        cacheados en disco y la biblioteca funciona offline.
+
+        Args:
+            all_resources: si es True, también descarga los esquemas XSD
+                (incluye el catálogo catCFDI.xsd, ~6 MB).
+        """
+        from .sat.resources import XSD_RESOURCES, XSLT_RESOURCES, get_manager
+
+        manager = get_manager()
+        manager.ensure_many(XSLT_RESOURCES)
+        if all_resources:
+            manager.ensure_many(XSD_RESOURCES)
+
     def set_template(self, template: str) -> None:
         """Set default template."""
         self._template = template

@@ -168,6 +168,22 @@ impacto, fix sugerido y **estado** (✅ implementado en `develop` / ⬜ pendient
   Añadida la suite `tests/test_cli.py` que cubre este flujo (cli.py pasó de
   0% de cobertura).
 
+### H13. Recursos SAT empaquetados en el paquete (~7 MB) — ✅ Corregido
+
+- **Dónde**: `src/cfdi_pdf/xslt/` y `src/cfdi_pdf/xsd/` (38 archivos, ~7 MB,
+  incluido el catálogo `catCFDI.xsd` de ~5.8 MB).
+- **Problema**: inflaban el wheel/paquete y congelaban una versión de los
+  recursos del SAT (el SAT los actualiza con frecuencia). Además, el mirror
+  usado como fuente aplica dos adaptaciones al `cadenaoriginal_4_0.xslt`
+  (relativiza `xsl:include` y reordena `version`) y al `cfdv40.xsd`
+  (relativiza `schemaLocation`), por lo que NO eran byte-idénticos al SAT.
+- **Fix**: se creó `SATResourceManager` (`sat/resources.py`) que descarga los
+  recursos en runtime desde el SAT (con mirror verificado como fallback), los
+  cachea en disco y verifica su SHA-256 contra un **manifiesto canónico**
+  empaquetado. El canonicalizador aplica a la fuente del SAT las mismas
+  adaptaciones que el mirror, de modo que ambas convergen al mismo hash.
+  Comando `cfdi-pdf --download-resources` para predescargar (deploys sin red).
+
 ### H9. README desactualizado en requisitos de lxml
 
 - **Dónde**: `README.md:296` dice `lxml >= 4.9.0`; `pyproject.toml:46` exige

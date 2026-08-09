@@ -47,6 +47,20 @@ class TestFormatters:
         assert "15/01/2024" in result
         assert "10:30:00" in result
 
+    def test_format_date_with_timezone(self) -> None:
+        """El offset de zona horaria se preserva y formatea (HH:MM)."""
+        result = Formatters.format_date("2024-01-15T10:30:00-06:00")
+        assert result == "15/01/2024 10:30:00 -06:00"
+
+    def test_format_date_utc_zulu(self) -> None:
+        """El sufijo Z se normaliza a +00:00."""
+        result = Formatters.format_date("2024-01-15T10:30:00Z")
+        assert result == "15/01/2024 10:30:00 +00:00"
+
+    def test_format_date_only(self) -> None:
+        """Una fecha sin hora no agrega hora."""
+        assert Formatters.format_date("2024-01-15") == "15/01/2024"
+
     def test_format_uuid_uppercase(self) -> None:
         """Test UUID uppercase formatting."""
         uuid = "cce4d168-1234-5678-9abc-def012345678"

@@ -1,5 +1,6 @@
 """Formatting utilities for CFDI PDF."""
 
+from datetime import datetime
 from decimal import Decimal
 from typing import Final
 
@@ -79,32 +80,37 @@ class Formatters:
         Format ISO date string for display.
 
         Args:
-            date_str: ISO 8601 date string (2024-01-15T10:30:00)
+            date_str: ISO 8601 date string. Puede incluir hora y zona horaria
+                (``2024-01-15T10:30:00``, ``2024-01-15T10:30:00-06:00``, ``...Z``).
 
         Returns:
-            Formatted date string (15/01/2024 10:30:00)
+            Formatted date string (``15/01/2024 10:30:00 -06:00``).
+            Devuelve el texto original si no se puede parsear.
         """
         if not date_str:
             return ""
 
         try:
-            # Parse ISO format
-            if "T" in date_str:
-                date_part, time_part = date_str.split("T")
-            else:
-                date_part = date_str
-                time_part = ""
-
-            # Reformat date (YYYY-MM-DD -> DD/MM/YYYY)
-            year, month, day = date_part.split("-")
-            formatted = f"{day}/{month}/{year}"
-
-            if time_part:
-                formatted += f" {time_part}"
-
-            return formatted
-        except Exception:
+            normalized = date_str[:-1] + "+00:00" if date_str.endswith("Z") else date_str
+            dt = datetime.fromisoformat(normalized)
+        except ValueError:
             return date_str
+
+        formatted = dt.strftime("%d/%m/%Y")
+
+        if dt.hour or dt.minute or dt.second:
+            formatted += f" {dt.hour:02d}:{dt.minute:02d}:{dt.second:02d}"
+
+        if dt.tzinfo is not None:
+            offset = dt.utcoffset()
+            if offset is not None:
+                total = int(offset.total_seconds())
+                sign = "+" if total >= 0 else "-"
+                total = abs(total)
+                hours, minutes = divmod(total // 60, 60)
+                formatted += f" {sign}{hours:02d}:{minutes:02d}"
+
+        return formatted
 
     @staticmethod
     def truncate_text(text: str, max_length: int, suffix: str = "...") -> str:

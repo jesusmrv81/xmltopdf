@@ -3,6 +3,18 @@
 import pytest
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _sat_xslt_resources() -> None:
+    """
+    Descarga (una vez por sesión) los XSLT del SAT necesarios para la cadena
+    original. El gestor los cachea en disco; los tests de validación XSD
+    descargan sus esquemas bajo demanda.
+    """
+    from cfdi_pdf.sat.resources import XSLT_RESOURCES, get_manager
+
+    get_manager().ensure_many(XSLT_RESOURCES)
+
+
 @pytest.fixture
 def valid_cfdi_40_xml() -> str:
     """Valid CFDI 4.0 XML sample."""

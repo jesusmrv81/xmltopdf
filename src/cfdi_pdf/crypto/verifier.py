@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from ..exceptions import InvalidCFDIError
@@ -60,11 +60,12 @@ class SelloVerifier:
         Verifica la firma del SAT (``SelloSAT``).
 
         El certificado del SAT no está embebido en el XML; debe pasarse el
-        certificado X.509 del SAT (PEM o DER base64) identificado por
-        ``NoCertificadoSAT``.
+        certificado X.509 del SAT identificado por ``NoCertificadoSAT``. Se
+        acepta en formato PEM (``-----BEGIN CERTIFICATE-----``), DER (bytes) o
+        base64 (como el atributo ``Certificado`` de un CFDI).
 
         Raises:
-            InvalidCFDIError: si el CFDI no tiene timbre.
+            InvalidCFDIError: si el CFDI no tiene timbre o el certificado es inválido.
         """
         if cfdi.timbre_fiscal is None:
             raise InvalidCFDIError("CFDI incompleto para verificar SelloSAT: falta timbre fiscal")
@@ -73,16 +74,29 @@ class SelloVerifier:
                 "CFDI incompleto para verificar SelloSAT: falta cadena original del timbre"
             )
 
-        if isinstance(sat_certificate, str):
-            der = base64.b64decode(_WHITESPACE.sub("", sat_certificate))
-        else:
-            der = sat_certificate
-
+        certificate_der = _certificate_to_der(sat_certificate)
         return _verify_signature(
             cadena_original=cfdi.timbre_fiscal.cadena_origen,
             sello=cfdi.timbre_fiscal.sello_sat,
-            certificate_der=der,
+            certificate_der=certificate_der,
         )
+
+
+def _certificate_to_der(certificate: str | bytes) -> bytes:
+    """Convierte un certificado PEM / DER / base64 a bytes DER."""
+    if isinstance(certificate, bytes):
+        # Bytes: puede ser PEM o DER.
+        if certificate.lstrip().startswith(b"-----BEGIN"):
+            return x509.load_pem_x509_certificate(certificate).public_bytes(
+                serialization.Encoding.DER
+            )
+        return certificate
+    # String: puede ser PEM o base64.
+    if "-----BEGIN CERTIFICATE-----" in certificate:
+        return x509.load_pem_x509_certificate(certificate.encode("utf-8")).public_bytes(
+            serialization.Encoding.DER
+        )
+    return base64.b64decode(_WHITESPACE.sub("", certificate))
 
 
 def _verify_signature(cadena_original: str, sello: str, certificate_der: bytes) -> bool:

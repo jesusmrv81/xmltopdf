@@ -163,10 +163,10 @@ class RenderEngine:
             return ""
 
     def _build_cadena_original(self, cfdi: CFDI) -> str:
-        """Return cadena original from timbre or helpers fallback."""
+        """Return cadena original del timbre (generada por el parser con la XSLT oficial)."""
         if cfdi.timbre_fiscal is None:
             return ""
-        return cfdi.timbre_fiscal.cadena_origen or self._helpers.build_cadena_original(cfdi)
+        return cfdi.timbre_fiscal.cadena_origen or ""
 
     def _build_formatted(self, cfdi: CFDI) -> dict[str, str | None]:
         """Build pre-formatted display values dict."""

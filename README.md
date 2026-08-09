@@ -226,6 +226,27 @@ if SelloVerifier.verify_sello_sat(cfdi, sat_certificate_pem):
 > **Nota**: la verificación de `SelloSAT` requiere el certificado X.509 del SAT
 > (no viene embebido en el XML); indícalo con `NoCertificadoSAT`.
 
+### Recursos del SAT (XSLT/XSD) — descarga en runtime
+
+La biblioteca **no empaqueta** los XSLT/XSD del SAT (son grandes y el SAT los
+actualiza con frecuencia). Se descargan bajo demanda, se cachean en disco y se
+verifican por **SHA-256** contra un manifiesto empaquetado:
+
+- **Origen**: primero `www.sat.gob.mx`; si está bloqueado (geo-bloqueo), un
+  mirror verificado. Configurables con `CFDI_PDF_BASE_URLS`.
+- **Caché**: `~/.cache/cfdi-pdf` (configurable con `CFDI_PDF_CACHE_DIR`).
+- **Predescarga** para deploys sin red:
+  ```bash
+  cfdi-pdf --download-resources        # XSLT de la cadena original (~400 KB)
+  cfdi-pdf --download-resources --all  # + esquemas XSD incl. catálogos (~7 MB)
+  ```
+  o desde Python: `CFDIPDF().ensure_resources(all_resources=True)`.
+
+Si el SAT actualiza un archivo, el hash no coincidirá y se lanza
+`SATResourceError` con el hash nuevo (detecta el cambio en vez de usar
+contenido no verificado). Ver `doc/seguridad.md` para los detalles de
+procedencia y el proceso de actualización del manifiesto.
+
 ### Variables disponibles en templates Jinja2
 
 | Variable | Tipo | Descripción |
@@ -337,11 +358,10 @@ src/cfdi_pdf/
 ├── sat/                # Catálogos SAT
 │   ├── catalogs.py
 │   ├── helpers.py
-│   └── cadena_original.py  # XSLT oficiales
+│   ├── cadena_original.py  # XSLT oficiales (cadena original)
+│   └── resources.py        # Descarga runtime + verificación SHA-256
 ├── utils/              # Utilidades
 │   └── formatters.py
-├── xslt/               # XSLT oficiales del SAT (cadena original)
-├── xsd/                # Esquemas oficiales (cfdv40, catálogos)
 └── templates/          # Templates incluidos
     ├── minimal/
     │   ├── template.html

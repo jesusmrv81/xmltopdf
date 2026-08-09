@@ -5,26 +5,24 @@ El SAT publica las transformaciones ``cadenaoriginal_4_0.xslt`` y
 implementa XSLT 1.0, estos estilos usan únicamente características compatibles
 con 1.0, por lo que pueden ejecutarse con ``lxml.etree.XSLT``.
 
-Los archivos se empaquetan dentro del paquete en ``cfdi_pdf/xslt/`` y se
-resuelven en runtime con ``importlib.resources``.
+Los archivos NO se empaquetan en la biblioteca: se descargan en runtime desde
+el SAT (con mirror verificado como respaldo) mediante :class:`SATResourceManager`
+y se cachean en disco.
 """
 
 import logging
 from functools import lru_cache
-from importlib.resources import files
 
 from lxml import etree
 
 from ..exceptions import XMLParseError
+from .resources import XSLT_RESOURCES, get_manager
 
 logger = logging.getLogger(__name__)
 
-# Raíz del árbol de XSLT del comprobante (espejo de www.sat.gob.mx/sitio_internet/cfd)
-_CFD_XSLT_ROOT = files("cfdi_pdf") / "xslt" / "cfd"
-_TFD_XSLT_PATH = files("cfdi_pdf") / "xslt" / "cadenaoriginal_TFD_1_1.xslt"
-
-# Ruta relativa del XSLT principal del comprobante dentro del árbol
+# Rutas relativas (dentro de sitio_internet/cfd) de los XSLT principales.
 _CFD_MAIN_XSLT = "4/cadenaoriginal_4_0/cadenaoriginal_4_0.xslt"
+_TFD_XSLT = "TimbreFiscalDigital/cadenaoriginal_TFD_1_1.xslt"
 
 
 def _secure_parser() -> etree.XMLParser:
@@ -48,12 +46,9 @@ def _compile_transform(xslt_path: str) -> etree.XSLT:
         raise XMLParseError(f"XSLT inválido: {xslt_path}: {exc}") from exc
 
 
-def _transform_path(*parts: str) -> str:
-    """Devuelve la ruta de archivo real de un recurso empaquetado."""
-    resource = _CFD_XSLT_ROOT
-    for part in parts:
-        resource = resource / part
-    return str(resource)
+def _ensure_xslt_tree() -> None:
+    """Descarga (una vez) todo el árbol XSLT de la cadena original 4.0."""
+    get_manager().ensure_many(XSLT_RESOURCES)
 
 
 def cadena_original_comprobante(xml: str | bytes | etree._Element) -> str:
@@ -69,8 +64,10 @@ def cadena_original_comprobante(xml: str | bytes | etree._Element) -> str:
 
     Raises:
         XMLParseError: si el XSLT no puede compilarse.
+        SATResourceError: si no se pueden descargar los XSLT del SAT.
     """
-    transform = _compile_transform(_transform_path(*_CFD_MAIN_XSLT.split("/")))
+    _ensure_xslt_tree()
+    transform = _compile_transform(str(get_manager().path(_CFD_MAIN_XSLT)))
 
     if isinstance(xml, str):
         document = etree.fromstring(xml.encode("utf-8"), _secure_parser())
@@ -92,5 +89,6 @@ def cadena_original_tfd(tfd_element: etree._Element) -> str:
     Returns:
         Cadena original del timbre fiscal digital.
     """
-    transform = _compile_transform(str(_TFD_XSLT_PATH))
+    _ensure_xslt_tree()
+    transform = _compile_transform(str(get_manager().path(_TFD_XSLT)))
     return str(transform(tfd_element))

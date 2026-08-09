@@ -5,7 +5,16 @@ Organizadas por horizonte temporal. Las que resuelven hallazgos de
 
 > **Actualización (2026-08-09)**: implementados los items 1, 2, 3 (cadena
 > original oficial + XSLT, validación XSD y Nómina/Carta Porte), los hallazgos
-> H1–H8 y H11, y los tests de CLI (item 6). Ver estado en cada sección.
+> H1–H8 y H11–H13, los tests de CLI (item 6) y la **descarga en runtime de los
+> recursos SAT** (H13, ya no se empaquetan ~7 MB). Ver estado en cada sección.
+
+## Arquitectura de recursos SAT (resuelta en H13)
+
+Los XSLT/XSD del SAT ya no se empaquetan. `SATResourceManager` los descarga del
+SAT (mirror verificado como fallback), los cachea en `~/.cache/cfdi-pdf` y
+verifica su SHA-256 contra un manifiesto canónico. Ventajas: wheel pequeño y
+los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
+`doc/seguridad.md` para procedencia y actualización del manifiesto.
 
 ## Corto plazo (alta prioridad, bajo esfuerzo)
 

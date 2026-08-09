@@ -99,6 +99,20 @@ class TestSelloVerifier:
 
         assert SelloVerifier.verify_sello_sat(cfdi, cert_b64) is True
 
+    def test_verify_sello_sat_with_pem(self, valid_cfdi_40_xml: str) -> None:
+        """SelloSAT se puede verificar pasando el certificado en PEM."""
+        key, cert = _make_key_and_cert()
+        pem = cert.public_bytes(serialization.Encoding.PEM).decode("ascii")
+
+        tfd_cadena = CFDIParser().parse_string(valid_cfdi_40_xml).timbre_fiscal.cadena_origen
+        assert tfd_cadena is not None
+
+        sello_sat = _sign(tfd_cadena, key)
+        xml_signed = re.sub(r'SelloSAT="[^"]*"', f'SelloSAT="{sello_sat}"', valid_cfdi_40_xml)
+        cfdi = CFDIParser().parse_string(xml_signed)
+
+        assert SelloVerifier.verify_sello_sat(cfdi, pem) is True
+
     def test_verify_requires_timbre(self, valid_cfdi_40_xml: str) -> None:
         """Sin timbre fiscal, la verificación debe lanzar InvalidCFDIError."""
         from lxml import etree

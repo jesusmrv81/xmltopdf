@@ -8,27 +8,31 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Añadido
+- **Recursos del SAT en runtime** (`sat/resources.py`): los XSLT/XSD ya no se
+  empaquetan; se descargan desde el SAT (mirror verificado como fallback), se
+  cachean en `~/.cache/cfdi-pdf` y se verifican por SHA-256 contra un
+  manifiesto canónico. `cfdi-pdf --download-resources [--all]` para
+  predescargar. Variables `CFDI_PDF_CACHE_DIR`, `CFDI_PDF_BASE_URLS`,
+  `CFDI_PDF_ALLOW_UNVERIFIED`.
 - **Cadena original oficial del SAT** (`cfdi_pdf/sat/cadena_original.py`): los
   XSLT `cadenaoriginal_4_0.xslt` (34 archivos con complementos) y
-  `cadenaoriginal_TFD_1_1.xslt` se empaquetan en el paquete y se ejecutan con
-  lxml. `CFDI.cadena_original` guarda la cadena del comprobante.
+  `cadenaoriginal_TFD_1_1.xslt`. `CFDI.cadena_original` guarda la cadena.
 - **Verificación de sellos** (`cfdi_pdf/crypto/verifier.py` + `SelloVerifier`):
-  `verify_sello_cfd` (certificado embebido) y `verify_sello_sat` (cert SAT)
-  validan la firma RSA SHA-256 contra la cadena original.
-- **Validación XSD** (`cfdi_pdf/parser/xsd_validator.py`): esquema `cfdv40.xsd`
-  + `catCFDI.xsd` + `tdCFDI.xsd` empaquetados; `CFDIParser(validate_xsd=True)`
-  y `CFDIPDF(validate_xsd=True)`.
-- **Complemento de Nómina 1.2**: modelos tipados (`models/nomina.py`), parser y
-  render en los 3 templates (`_partials/nomina.html`).
-- **Complemento de Carta Porte 3.1**: modelos tipados (`models/carta_porte.py`),
-  parser y render en los 3 templates (`_partials/carta_porte.html`).
-- `render_bytes_from_string(xml_content, ...)` → `(bytes, filename)` sin
-  escribir a disco — habilita integraciones web (FastAPI, S3, etc.)
-- Ejemplo `examples/fastapi_service.py`: microservicio FastAPI que consume la
-  librería pura (endpoints `/render`, `/templates`, `/health`)
-- Dependencia `cryptography` para verificación de sellos
-- Tests: cadena original, validación XSD, verificación de sellos, Nómina,
-  Carta Porte y **CLI** (nueva suite `test_cli.py`)
+  `verify_sello_cfd` (certificado embebido) y `verify_sello_sat` (cert SAT en
+  PEM/DER/base64) validan la firma RSA SHA-256 contra la cadena original.
+- **Validación XSD** (`cfdi_pdf/parser/xsd_validator.py`): `validate_xsd=True`
+  en `CFDIParser`/`CFDIPDF` contra `cfdv40.xsd` (catálogos descargados).
+- **Complemento de Nómina 1.2**: modelos tipados, parser y render en los 3
+  templates (`_partials/nomina.html`).
+- **Complemento de Carta Porte 3.1**: modelos tipados, parser y render en los
+  3 templates (`_partials/carta_porte.html`).
+- **`format_date` con zona horaria**: preserva y formatea el offset
+  (`15/01/2024 10:30:00 -06:00`).
+- `render_bytes_from_string(xml_content, ...)` → `(bytes, filename)` sin disco.
+- Ejemplo `examples/fastapi_service.py`: microservicio FastAPI con la lib pura.
+- Dependencia `cryptography` para verificación de sellos.
+- Tests: recursos SAT, cadena original, validación XSD, sellos (PEM/DER), Nómina,
+  Carta Porte, fecha con zona y **CLI**.
 
 ### Corregido
 - **CLI `--list-templates` sin argumentos fallaba** (exit 2): `files` ahora es
@@ -48,6 +52,10 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - `logger.warning` con f-string → formato lazy en `render/template.py` (H8)
 
 ### Cambiado
+- **Recursos SAT fuera del paquete**: se eliminaron `xslt/` y `xsd/` empaquetados
+  (~7 MB); ahora se descargan y cachean en runtime (H13)
+- **`SATHelpers.build_cadena_original` eliminado**: la cadena del comprobante se
+  genera solo con la XSLT oficial en el parser
 - **Versión unificada**: `__version__` y `cli --version` se leen de
   `importlib.metadata` (fuente única: `pyproject.toml`) en lugar de constantes
   hardcodeadas (H3/H7)

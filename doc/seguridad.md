@@ -88,6 +88,43 @@ endurecimiento.
 - **Validación estructural**: `validate_xsd=True` valida contra `cfdv40.xsd`
   (incluye catálogos oficiales) en el parser y en `CFDIPDF`.
 
+## Procedencia de los recursos del SAT (XSLT/XSD)
+
+Los recursos **no se empaquetan** en la biblioteca; se descargan en runtime
+(`cfdi_pdf/sat/resources.py`) y se cachean en disco (`~/.cache/cfdi-pdf`).
+Esto evita inflar el paquete y permite absorber las actualizaciones del SAT.
+
+**Verificación de integridad**: cada descarga se compara contra un **manifiesto
+SHA-256 empaquetado**. El hash se calcula sobre una *forma canónica* (saltos de
+línea normalizados y sin salto final). El manifiesto se generó descargando los
+**38 recursos directamente del SAT** (`www.sat.gob.mx/sitio_internet/cfd`) el
+2026-08-09 y verificando que la fuente secundaria los reproduzca.
+
+**Fuentes (en orden)**: primero el **SAT oficial**; si no responde (el SAT
+bloquea geo-físicamente algunas regiones) se usa un **mirror verificado**
+(`phpcfdi/resources-sat-xml`), que es copia fiel del árbol del SAT. Se
+configuran/desactivan con la variable `CFDI_PDF_BASE_URLS`.
+
+**Adaptaciones documentadas** (única diferencia entre el SAT y el mirror):
+- `cadenaoriginal_4_0.xslt`: el original del SAT usa `xsl:include` con URLs
+  absolutas y `version="2.0"`; el mirror las convierte a rutas relativas y
+  reordena el atributo `version`. El canonicalizador aplica esa transformación
+  al contenido del SAT, de modo que **ambas fuentes convergen al mismo hash**.
+- `cfdv40.xsd`: el mirror relativiza los `schemaLocation`; el canonicalizador
+  los devuelve a la forma absoluta del SAT.
+
+**Si el SAT actualiza un archivo** (el hash ya no coincide con el manifiesto)
+se lanza `SATResourceError` con el hash nuevo; así se detecta el cambio en vez
+de usar contenido no verificado. Para re-sincronizar el manifiesto, se actualiza
+`MANIFEST` en `resources.py` siguiendo el proceso descrito en `doc/analisis.md`.
+
+**Variables de entorno**:
+| Variable | Efecto |
+|---|---|
+| `CFDI_PDF_CACHE_DIR` | Directorio de caché (por defecto `~/.cache/cfdi-pdf`) |
+| `CFDI_PDF_BASE_URLS` | Lista de URLs base separadas por comas (SAT, mirror o fuente propia) |
+| `CFDI_PDF_ALLOW_UNVERIFIED=1` | Desactiva la verificación SHA-256 (no recomendado) |
+
 ## Suministro de dependencias
 
 Dependencias de runtime: `pydantic`, `Jinja2`, `WeasyPrint`, `qrcode[pil]`,

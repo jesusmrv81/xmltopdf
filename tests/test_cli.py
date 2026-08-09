@@ -127,3 +127,13 @@ class TestCLI:
         code = _run_main([str(xml_path)], monkeypatch)
 
         assert code == 1
+
+    def test_download_resources(
+        self, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """--download-resources predescarga los XSLT del SAT y sale con 0."""
+        code = _run_main(["--download-resources"], monkeypatch)
+        out = capsys.readouterr().out
+
+        assert code == 0
+        assert "Recursos del SAT" in out

@@ -99,6 +99,19 @@ Ejemplos:
     )
 
     parser.add_argument(
+        "--download-resources",
+        action="store_true",
+        help="Predescargar los recursos oficiales del SAT (XSLT/XSD) y salir. "
+        "Usa --all para incluir también los esquemas XSD (~6 MB)",
+    )
+
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Con --download-resources, descarga también los XSD de validación",
+    )
+
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -106,6 +119,17 @@ Ejemplos:
 
     args = parser.parse_args()
     setup_logging(args.verbose)
+
+    # ── --download-resources ──────────────────────────────────────────────────
+    if args.download_resources:
+        converter = CFDIPDF()
+        try:
+            converter.ensure_resources(all_resources=args.all)
+        except Exception as exc:
+            logger.error("No se pudieron descargar los recursos del SAT: %s", exc)
+            return 1
+        print("✓ Recursos del SAT descargados y verificados")
+        return 0
 
     # ── --list-templates ──────────────────────────────────────────────────────
     if args.list_templates:

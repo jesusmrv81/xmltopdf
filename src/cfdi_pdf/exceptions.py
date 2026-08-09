@@ -57,3 +57,9 @@ class PDFGenerationError(CFDIPDFError):
     """Raised when PDF generation fails."""
 
     pass
+
+
+class SATResourceError(CFDIPDFError):
+    """Raised when SAT resources (XSLT/XSD) cannot be downloaded or verified."""
+
+    pass

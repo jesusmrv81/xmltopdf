@@ -56,4 +56,7 @@ Carta Porte 3.1**.
 7. **Atributos tipo `P`** — `Certificado` opcional según el XSD.
 8. **CLI `--list-templates` rota** — `files` opcional + suite `test_cli.py`.
 9. **Verificación de sellos** — `SelloVerifier` valida SelloCFD/SelloSAT.
+10. **Recursos SAT empaquetados (~7 MB)** — ahora se descargan en runtime desde
+    el SAT (mirror verificado como fallback) con verificación SHA-256 contra un
+    manifiesto canónico; `cfdi-pdf --download-resources` para predescargar.
 
