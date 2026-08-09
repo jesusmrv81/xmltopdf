@@ -31,7 +31,7 @@ class TemplateManager:
                 if path.exists() and path.is_dir():
                     self._template_paths.append(path)
                 else:
-                    logger.warning(f"Custom template path does not exist: {path}")
+                    logger.warning("Custom template path does not exist: %s", path)
 
         # Add built-in templates
         if self.BUILTIN_TEMPLATES_DIR.exists():

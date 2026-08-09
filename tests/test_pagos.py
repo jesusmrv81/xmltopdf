@@ -3,9 +3,38 @@
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
+
+from cfdi_pdf.exceptions import InvalidCFDIError
 from cfdi_pdf.parser import CFDIParser
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+PAGOS20_MINIMAL_XML = """<?xml version="1.0" encoding="utf-8"?>
+<cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+    xmlns:pago20="http://www.sat.gob.mx/Pagos20" Version="4.0"
+    Fecha="2024-04-29T00:00:00" NoCertificado="30001000000500003416"
+    SubTotal="0" Moneda="XXX" Total="0" TipoDeComprobante="P"
+    Exportacion="01" LugarExpedicion="31607">
+    <cfdi:Emisor Rfc="EKU9003173C9" Nombre="ESCUELA KEMPER URGATE" RegimenFiscal="601" />
+    <cfdi:Receptor Rfc="URE180429TM6" Nombre="UNIVERSIDAD ROBOTICA ESPAÑOLA"
+        DomicilioFiscalReceptor="86991" RegimenFiscalReceptor="601" UsoCFDI="CP01" />
+    <cfdi:Conceptos>
+        <cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="ACT"
+            Descripcion="Pago" ValorUnitario="0" Importe="0" ObjetoImp="01" />
+    </cfdi:Conceptos>
+    <cfdi:Complemento>
+        <pago20:Pagos Version="2.0">
+            <pago20:Totales MontoTotalPagos="100.00" />
+            <pago20:Pago FechaPago="2022-04-28T17:49:04" FormaDePagoP="03"
+                MonedaP="MXN" Monto="100.00">
+                <pago20:DoctoRelacionado IdDocumento="79ff44fd-f0ba-4024-a55f-0a228fa72903"
+                    MonedaDR="MXN" NumParcialidad="1" ImpSaldoAnt="100.00"
+                    ImpPagado="100.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02" />
+            </pago20:Pago>
+        </pago20:Pagos>
+    </cfdi:Complemento>
+</cfdi:Comprobante>"""
 
 
 class TestPagos20Parser:
@@ -162,3 +191,38 @@ class TestPagos20Parser:
         assert cfdi.timbre_fiscal is not None
         assert cfdi.timbre_fiscal.uuid == "b8fa6f87-443f-437a-80e6-799dfe501ca7"
         assert cfdi.timbre_fiscal.version == "1.1"
+
+    def test_parse_pagos_without_optional_fields(self) -> None:
+        """EquivalenciaDR/TipoCambioP son opcionales (MonedaDR==MonedaP==MXN)."""
+        parser = CFDIParser()
+        cfdi = parser.parse_string(PAGOS20_MINIMAL_XML)
+
+        assert cfdi.pagos is not None
+        pago = cfdi.pagos.pago[0]
+        assert pago.tipo_cambio_p is None
+        docto = pago.docto_relacionado[0]
+        assert docto.equivalencia_dr is None
+
+    def test_parse_pagos_tipo_p_without_certificado(self) -> None:
+        """CFDI tipo P puede no incluir Certificado (XSD: condicional)."""
+        parser = CFDIParser()
+        cfdi = parser.parse_string(PAGOS20_MINIMAL_XML)
+
+        assert cfdi.tipo_comprobante == "P"
+        assert cfdi.certificado is None
+
+    def test_parse_pagos_invalid_num_parcialidad(self) -> None:
+        """NumParcialidad no numérico debe lanzar InvalidCFDIError."""
+        xml = PAGOS20_MINIMAL_XML.replace('NumParcialidad="1"', 'NumParcialidad="x"')
+        parser = CFDIParser()
+
+        with pytest.raises(InvalidCFDIError):
+            parser.parse_string(xml)
+
+    def test_parse_pagos_missing_totales(self) -> None:
+        """Pagos sin Totales debe lanzar InvalidCFDIError (no descartar silencioso)."""
+        xml = PAGOS20_MINIMAL_XML.replace('<pago20:Totales MontoTotalPagos="100.00" />', "")
+        parser = CFDIParser()
+
+        with pytest.raises(InvalidCFDIError):
+            parser.parse_string(xml)

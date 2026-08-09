@@ -63,6 +63,21 @@ class TestCFDIParser:
         assert cfdi.timbre_fiscal.uuid == "CCE4D168-1234-5678-9ABC-DEF012345678"
         assert cfdi.timbre_fiscal.rfc_prov_certif == "SPR190613I52"
 
+    def test_parse_timbre_cadena_original(self, valid_cfdi_40_xml: str) -> None:
+        """Cadena original del TFD debe seguir la XSLT oficial (sin SelloSAT)."""
+        parser = CFDIParser()
+        cfdi = parser.parse_string(valid_cfdi_40_xml)
+
+        assert cfdi.timbre_fiscal is not None
+        cadena = cfdi.timbre_fiscal.cadena_origen
+        expected = (
+            "||1.1|CCE4D168-1234-5678-9ABC-DEF012345678|2024-01-15T10:35:00"
+            "|SPR190613I52|abc123def456ghi789jkl012mno345pqr678stu901vwx234"
+            "|00001000000504465028||"
+        )
+        assert cadena == expected
+        assert "xyz789abc456" not in cadena  # SelloSAT no debe incluirse
+
     def test_parse_taxes_at_concept_level(self, valid_cfdi_40_xml: str) -> None:
         """Test parsing taxes at concept level."""
         parser = CFDIParser()

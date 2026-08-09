@@ -131,6 +131,8 @@ class CFDIParser:
         if version != "4.0":
             raise InvalidCFDIError(f"Unsupported CFDI version: {version}. Only 4.0 is supported.")
 
+        tipo_comprobante = self._get_attr(root, "TipoDeComprobante")
+
         return CFDI(
             version=version,
             serie=self._get_optional_attr(root, "Serie"),
@@ -144,12 +146,16 @@ class CFDIParser:
             moneda=self._get_attr(root, "Moneda"),
             tipo_cambio=self._get_optional_decimal(root, "TipoCambio"),
             total=self._get_decimal(root, "Total"),
-            tipo_comprobante=self._get_attr(root, "TipoDeComprobante"),
+            tipo_comprobante=tipo_comprobante,
             exportacion=self._get_attr(root, "Exportacion"),
             lugar_expedicion=self._get_attr(root, "LugarExpedicion"),
             confirmacion=self._get_optional_attr(root, "Confirmacion"),
             no_certificado=self._get_attr(root, "NoCertificado"),
-            certificado=self._get_attr(root, "Certificado"),
+            certificado=(
+                self._get_optional_attr(root, "Certificado")
+                if tipo_comprobante == "P"
+                else self._get_attr(root, "Certificado")
+            ),
             emisor=self._parse_emisor(root),
             receptor=self._parse_receptor(root),
             conceptos=self._parse_conceptos(root),
@@ -326,7 +332,8 @@ class CFDIParser:
 
     def _build_cadena_original(self, tfd_elem: etree._Element) -> str:
         """
-        Build cadena original from TFD attributes.
+        Build cadena original from TFD attributes, matching the official SAT
+        transformation ``cadenaoriginal_TFD_1_1.xslt``.
 
         NOTE: In production, this should use the official SAT XSLT transformation.
         This is a simplified version for demonstration purposes.
@@ -337,7 +344,6 @@ class CFDIParser:
             self._get_attr(tfd_elem, "FechaTimbrado"),
             self._get_attr(tfd_elem, "RfcProvCertif"),
             self._get_attr(tfd_elem, "SelloCFD"),
-            self._get_attr(tfd_elem, "SelloSAT"),
             self._get_attr(tfd_elem, "NoCertificadoSAT"),
         ]
         return "||" + "|".join(parts) + "||"
@@ -428,7 +434,7 @@ class CFDIParser:
         # Parse Totales
         totales_elem = pagos_elem.find(f"{{{PAGOS20_NS}}}Totales")
         if totales_elem is None:
-            return None
+            raise InvalidCFDIError("Pagos complement found but missing required element: Totales")
 
         totales = Totales(
             MontoTotalPagos=self._get_decimal(totales_elem, "MontoTotalPagos"),
@@ -473,8 +479,8 @@ class CFDIParser:
                     DoctoRelacionado(
                         IdDocumento=self._get_attr(doc_elem, "IdDocumento"),
                         MonedaDR=self._get_attr(doc_elem, "MonedaDR"),
-                        EquivalenciaDR=self._get_decimal(doc_elem, "EquivalenciaDR"),
-                        NumParcialidad=int(self._get_attr(doc_elem, "NumParcialidad")),
+                        EquivalenciaDR=self._get_optional_decimal(doc_elem, "EquivalenciaDR"),
+                        NumParcialidad=self._get_int(doc_elem, "NumParcialidad"),
                         ImpSaldoAnt=self._get_decimal(doc_elem, "ImpSaldoAnt"),
                         ImpPagado=self._get_decimal(doc_elem, "ImpPagado"),
                         ImpSaldoInsoluto=self._get_decimal(doc_elem, "ImpSaldoInsoluto"),
@@ -488,7 +494,7 @@ class CFDIParser:
                     FechaPago=self._get_attr(pago_elem, "FechaPago"),
                     FormaDePagoP=self._get_attr(pago_elem, "FormaDePagoP"),
                     MonedaP=self._get_attr(pago_elem, "MonedaP"),
-                    TipoCambioP=self._get_decimal(pago_elem, "TipoCambioP"),
+                    TipoCambioP=self._get_optional_decimal(pago_elem, "TipoCambioP"),
                     Monto=self._get_decimal(pago_elem, "Monto"),
                     NumOperacion=self._get_optional_attr(pago_elem, "NumOperacion"),
                     RfcEmisorCtaOrd=self._get_optional_attr(pago_elem, "RfcEmisorCtaOrd"),
@@ -586,3 +592,16 @@ class CFDIParser:
             return Decimal(value_str)
         except InvalidOperation as exc:
             raise InvalidCFDIError(f"Invalid decimal value for {attr_name}: {value_str!r}") from exc
+
+    def _get_int(self, elem: etree._Element, attr_name: str) -> int:
+        """
+        Get a required attribute as int.
+
+        Raises:
+            InvalidCFDIError: If attribute is absent or not a valid integer.
+        """
+        value_str = self._get_attr(elem, attr_name)
+        try:
+            return int(value_str)
+        except ValueError as exc:
+            raise InvalidCFDIError(f"Invalid integer value for {attr_name}: {value_str!r}") from exc

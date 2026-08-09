@@ -7,6 +7,33 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Corregido
+- **Cadena original del TFD**: `_build_cadena_original` ya no incluye `SelloSAT` y
+  respeta el orden oficial de `cadenaoriginal_TFD_1_1.xslt` (H1)
+- **Campos opcionales de Pagos20**: `EquivalenciaDR` y `TipoCambioP` ahora son
+  `Decimal | None` (opcionales cuando `MonedaDR == MonedaP` / `MonedaP == MXN`).
+  Los templates muestran `1` cuando están ausentes (H2)
+- **`NumParcialidad`**: nuevo helper `_get_int` traduce `ValueError` →
+  `InvalidCFDIError` (H5)
+- **Pagos sin `Totales`**: ahora lanzan `InvalidCFDIError` en vez de descartar
+  los datos silenciosamente (H6)
+- **CFDI tipo `P`**: `Certificado` opcional según el XSD (H11)
+- **Job `pip-audit` del CI**: instala `pip-tools` y audita los requisitos
+  compilados (antes auditaba una lista vacía) (H4)
+- `logger.warning` con f-string → formato lazy en `render/template.py` (H8)
+
+### Cambiado
+- **Versión unificada**: `__version__` y `cli --version` se leen de
+  `importlib.metadata` (fuente única: `pyproject.toml`) en lugar de constantes
+  hardcodeadas (H3/H7)
+- Auditoría documental completa en `doc/` (análisis, hallazgos, mejoras,
+  seguridad y calidad)
+
+### Añadido
+- Tests: cadena original del TFD, campos opcionales de Pagos20, `_get_int`
+  inválido, Pagos sin Totales, CFDI tipo P sin `Certificado` y consistencia
+  de versión
+
 ### Añadido
 - Template `corporativo`: diseño azul corporativo `#1a3a5c`, tablas HTML para layout fiscal
 - Template `clasico`: blanco/negro, tipografía Times New Roman, máxima compatibilidad (wkhtmltopdf)

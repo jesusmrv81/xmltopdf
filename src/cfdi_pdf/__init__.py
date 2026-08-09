@@ -1,5 +1,7 @@
 """CFDI PDF - Professional CFDI 4.0 XML to PDF converter for Mexico SAT."""
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .api import CFDIPDF
 from .exceptions import (
     CFDIPDFError,
@@ -12,7 +14,10 @@ from .exceptions import (
     XMLParseError,
 )
 
-__version__ = "0.1.0"
+try:
+    __version__ = version("cfdi-pdf")
+except PackageNotFoundError:  # pragma: no cover - package not installed
+    __version__ = "0.0.0+dev"
 
 __all__ = [
     "CFDIPDF",

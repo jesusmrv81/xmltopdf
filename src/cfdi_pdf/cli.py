@@ -5,6 +5,7 @@ import logging
 import sys
 from pathlib import Path
 
+from . import __version__
 from .api import CFDIPDF
 from .exceptions import CFDIPDFError
 
@@ -100,7 +101,7 @@ Ejemplos:
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.1.0",
+        version=f"%(prog)s {__version__}",
     )
 
     args = parser.parse_args()

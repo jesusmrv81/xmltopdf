@@ -36,7 +36,10 @@ class CFDI(BaseModel):
     lugar_expedicion: str = Field(..., description="Código postal de expedición")
     confirmacion: str | None = Field(None, description="Clave de confirmación")
     no_certificado: str = Field(..., description="Número de certificado del emisor")
-    certificado: str = Field(..., description="Certificado del emisor")
+    certificado: str | None = Field(
+        None,
+        description="Certificado del emisor. Opcional en CFDI tipo P (Pago).",
+    )
 
     emisor: Emisor = Field(..., description="Datos del emisor")
     receptor: Receptor = Field(..., description="Datos del receptor")

@@ -219,7 +219,7 @@
                     <tr>
                         <td>
                             <span class="fiscal-label">Tipo de Cambio</span>
-                            <span class="fiscal-value">{{ format_number(pago.tipo_cambio_p, 6) }}</span>
+                            <span class="fiscal-value">{% if pago.tipo_cambio_p is not none %}{{ format_number(pago.tipo_cambio_p, 6) }}{% else %}1{% endif %}</span>
                         </td>
                         <td>
                             <span class="fiscal-label">Monto</span>

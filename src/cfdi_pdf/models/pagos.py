@@ -53,8 +53,11 @@ class DoctoRelacionado(BaseModel):
         ..., alias="IdDocumento", description="UUID del documento relacionado"
     )
     moneda_dr: str = Field(..., alias="MonedaDR", description="Moneda del documento relacionado")
-    equivalencia_dr: Decimal = Field(
-        ..., alias="EquivalenciaDR", description="Tipo de cambio respecto a moneda del pago"
+    equivalencia_dr: Decimal | None = Field(
+        None,
+        alias="EquivalenciaDR",
+        description="Tipo de cambio respecto a moneda del pago. Opcional; solo debe "
+        "incluirse cuando MonedaDR difiere de MonedaP.",
     )
     num_parcialidad: int = Field(..., alias="NumParcialidad", description="Número de parcialidad")
     imp_saldo_ant: Decimal = Field(
@@ -118,7 +121,12 @@ class Pago(BaseModel):
         ..., alias="FormaDePagoP", description="Forma de pago (c_FormaDePagoP)"
     )
     moneda_p: str = Field(..., alias="MonedaP", description="Moneda del pago")
-    tipo_cambio_p: Decimal = Field(..., alias="TipoCambioP", description="Tipo de cambio del pago")
+    tipo_cambio_p: Decimal | None = Field(
+        None,
+        alias="TipoCambioP",
+        description="Tipo de cambio del pago. Opcional; solo debe incluirse cuando "
+        "MonedaP difiere de MXN.",
+    )
     monto: Decimal = Field(..., alias="Monto", description="Monto del pago")
     num_operacion: str | None = Field(None, alias="NumOperacion", description="Número de operación")
     rfc_emisor_cta_ord: str | None = Field(

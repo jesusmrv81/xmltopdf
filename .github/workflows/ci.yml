@@ -112,10 +112,12 @@ jobs:
         cache: "pip"
 
     - name: Install pip-audit
-      run: pip install pip-audit
+      run: pip install pip-audit pip-tools
 
     - name: Audit dependencies
-      run: pip-audit --desc -r <(pip-compile pyproject.toml --quiet 2>/dev/null || echo "")
+      run: |
+        pip-compile pyproject.toml --quiet -o /tmp/requirements-audit.txt
+        pip-audit --desc -r /tmp/requirements-audit.txt
       continue-on-error: false
 
   # ────────────────────────────────────────────────────────────

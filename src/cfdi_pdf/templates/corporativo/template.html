@@ -173,7 +173,7 @@
                     <td style="width:16%;"><span class="fiscal-label">Fecha</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ format_date(pago.fecha_pago) }}</span></td>
                     <td style="width:24%;"><span class="fiscal-label">Forma</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ get_forma_pago_p(pago.forma_de_pago_p) }}</span></td>
                     <td style="width:10%;"><span class="fiscal-label">Moneda</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ pago.moneda_p }}</span></td>
-                    <td style="width:14%;"><span class="fiscal-label">T.Cambio</span><br><span class="fiscal-value" style="font-size:7.5pt;">{{ format_number(pago.tipo_cambio_p, 4) }}</span></td>
+                    <td style="width:14%;"><span class="fiscal-label">T.Cambio</span><br><span class="fiscal-value" style="font-size:7.5pt;">{% if pago.tipo_cambio_p is not none %}{{ format_number(pago.tipo_cambio_p, 4) }}{% else %}1{% endif %}</span></td>
                     <td style="width:36%;text-align:right;"><span class="fiscal-label">Monto</span><br><span class="fiscal-value" style="font-size:8pt;font-weight:600;">{{ format_currency(pago.monto, pago.moneda_p) }}</span></td>
                 </tr>
             </table>

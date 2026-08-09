@@ -1,16 +1,27 @@
 """Tests for main API."""
 
+import importlib.metadata
 import tempfile
 from pathlib import Path
 
 import pytest
 
+import cfdi_pdf
 from cfdi_pdf import CFDIPDF
 from cfdi_pdf.exceptions import CFDIPDFError, XMLParseError
 
 
 class TestCFDIPDF:
     """Test suite for CFDIPDF main API."""
+
+    def test_version_consistency(self) -> None:
+        """__version__ debe coincidir con la metadata del paquete instalado."""
+        try:
+            installed = importlib.metadata.version("cfdi-pdf")
+        except importlib.metadata.PackageNotFoundError:
+            pytest.skip("cfdi-pdf no está instalado en este entorno")
+
+        assert cfdi_pdf.__version__ == installed
 
     def test_initialization(self) -> None:
         """Test CFDIPDF initialization."""
