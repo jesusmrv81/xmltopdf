@@ -52,9 +52,11 @@ endurecimiento.
   No es un ataque, pero un PDF que muestre una cadena original inválida puede
   inducir a error en una revisión manual de integridad fiscal.
 
-### R4. QR sin encoding (Riesgo de funcionalidad, no de seguridad)
+### R4. QR sin encoding (Riesgo de funcionalidad) — ✅ Resuelto
 
-- Ver [hallazgos.md D1](hallazgos.md#d1-qr-sin-percent-encoding-del-parámetro-fe).
+- El parámetro `fe` (base64 `+/=`) ahora se codifica por percent-encoding
+  (`urllib.parse.quote`), por lo que el QR es robusto en cualquier query
+  string.
 
 ## Recomendaciones de endurecimiento
 

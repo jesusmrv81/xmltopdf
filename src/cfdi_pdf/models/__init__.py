@@ -14,7 +14,10 @@ from .carta_porte import (
 from .cfdi import CFDI
 from .concepto import Concepto
 from .emisor import Emisor
+from .ieps import IEPS, RetencionIEPS, TrasladoIEPS
 from .impuestos import ImpuestosComprobante, ImpuestosConcepto, Retencion, Traslado
+from .informacion_global import InformacionGlobal
+from .leyendas import Leyenda, LeyendasFiscales
 from .nomina import (
     Deduccion,
     Deducciones,
@@ -43,6 +46,7 @@ from .timbre import TimbreFiscalDigital
 
 __all__ = [
     "CFDI",
+    "IEPS",
     "Autotransporte",
     "CartaPorte",
     "Concepto",
@@ -57,6 +61,9 @@ __all__ = [
     "ImpuestosConcepto",
     "ImpuestosDR",
     "ImpuestosP",
+    "InformacionGlobal",
+    "Leyenda",
+    "LeyendasFiscales",
     "Mercancia",
     "Mercancias",
     "Nomina",
@@ -71,11 +78,13 @@ __all__ = [
     "Receptor",
     "Retencion",
     "RetencionDR",
+    "RetencionIEPS",
     "RetencionP",
     "TimbreFiscalDigital",
     "Totales",
     "Traslado",
     "TrasladoDR",
+    "TrasladoIEPS",
     "TrasladoP",
     "Ubicacion",
     "Ubicaciones",

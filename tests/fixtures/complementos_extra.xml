@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cfdi:Comprobante
+    xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+    xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital"
+    xmlns:leyendasFisc="http://www.sat.gob.mx/leyendasFiscales"
+    xmlns:ieps="http://www.sat.gob.mx/ieps"
+    Version="4.0"
+    Fecha="2024-01-15T10:30:00"
+    FormaPago="03"
+    MetodoPago="PUE"
+    SubTotal="1000.00"
+    Moneda="MXN"
+    TipoCambio="1"
+    Total="1160.00"
+    TipoDeComprobante="I"
+    Exportacion="01"
+    LugarExpedicion="06600"
+    NoCertificado="30001000000400002495"
+    Certificado="MIIE...">
+    <cfdi:InformacionGlobal Periodicidad="01" Meses="01" Año="2024"/>
+    <cfdi:Emisor
+        Rfc="AAA010101AAA"
+        Nombre="EMPRESA EJEMPLO SA DE CV"
+        RegimenFiscal="601"/>
+    <cfdi:Receptor
+        Rfc="XAXX010101000"
+        Nombre="PUBLICO EN GENERAL"
+        DomicilioFiscalReceptor="06600"
+        RegimenFiscalReceptor="616"
+        UsoCFDI="G03"/>
+    <cfdi:Conceptos>
+        <cfdi:Concepto
+            ClaveProdServ="01010101"
+            Cantidad="1"
+            ClaveUnidad="E48"
+            Unidad="Pieza"
+            Descripcion="Producto de ejemplo"
+            ValorUnitario="1000.00"
+            Importe="1000.00"
+            ObjetoImp="02">
+            <cfdi:Impuestos>
+                <cfdi:Traslados>
+                    <cfdi:Traslado Base="1000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="160.00"/>
+                </cfdi:Traslados>
+            </cfdi:Impuestos>
+        </cfdi:Concepto>
+    </cfdi:Conceptos>
+    <cfdi:Impuestos TotalImpuestosTrasladados="160.00">
+        <cfdi:Traslados>
+            <cfdi:Traslado Base="1000.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="160.00"/>
+        </cfdi:Traslados>
+    </cfdi:Impuestos>
+    <cfdi:Complemento>
+        <leyendasFisc:LeyendasFiscales version="1.0">
+            <leyendasFisc:Leyenda disposicionFiscal="RMF 2024 4.5.2" norma="Artículo 18-A del CFF" textoLeyenda="Este comprobante ampara un pago parcial"/>
+        </leyendasFisc:LeyendasFiscales>
+        <ieps:IEPS version="1.0">
+            <ieps:Traslado Base="500.00" Impuesto="IEPS" TipoFactor="Tasa" TasaOCuota="0.08" Importe="40.00"/>
+            <ieps:Retencion Impuesto="IEPS" Importe="5.00"/>
+        </ieps:IEPS>
+        <tfd:TimbreFiscalDigital
+            Version="1.1"
+            UUID="DE3D4680-7777-8888-9999-AAAABBBBCCCC"
+            FechaTimbrado="2024-01-15T10:35:00"
+            RfcProvCertif="SPR190613I52"
+            SelloCFD="abc123def456ghi789jkl012mno345pqr678stu901vwx234"
+            SelloSAT="xyz789abc456def012ghi345jkl678mno901pqr234stu567"
+            NoCertificadoSAT="00001000000504465028"/>
+    </cfdi:Complemento>
+    <cfdi:Addenda>
+        <custom:nota xmlns:custom="http://www.emisor.com/custom">
+            <custom:campo>valor arbitrario del emisor (no fiscal)</custom:campo>
+        </custom:nota>
+    </cfdi:Addenda>
+</cfdi:Comprobante>

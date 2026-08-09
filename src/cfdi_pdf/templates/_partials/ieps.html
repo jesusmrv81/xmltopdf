@@ -1,0 +1,47 @@
+{% if cfdi.ieps %}
+<section class="ieps-section">
+    <h3>Complemento de IEPS</h3>
+    <div class="pago-compact" style="page-break-inside: avoid; break-inside: avoid;">
+        {% if cfdi.ieps.traslado %}
+        <table class="doctos-compact">
+            <thead>
+                <tr>
+                    <th>Traslado IEPS</th>
+                    <th style="width:55px;">Base</th>
+                    <th style="width:70px;">Tasa</th>
+                    <th style="width:80px;">Importe</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in cfdi.ieps.traslado %}
+                <tr>
+                    <td>{{ t.impuesto }}</td>
+                    <td style="text-align:right;">{{ format_currency(t.base, moneda, include_symbol=false) if t.base else '-' }}</td>
+                    <td style="text-align:right;">{{ format_tax_rate(t.tasa_o_cuota) if t.tasa_o_cuota else '-' }}</td>
+                    <td style="text-align:right;">{{ format_currency(t.importe, moneda, include_symbol=false) if t.importe else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        {% if cfdi.ieps.retencion %}
+        <table class="doctos-compact">
+            <thead>
+                <tr>
+                    <th>Retención IEPS</th>
+                    <th style="width:80px;">Importe</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in cfdi.ieps.retencion %}
+                <tr>
+                    <td>{{ r.impuesto }}</td>
+                    <td style="text-align:right;">-{{ format_currency(r.importe, moneda, include_symbol=false) if r.importe else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+</section>
+{% endif %}

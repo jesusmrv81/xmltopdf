@@ -47,24 +47,30 @@ los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
 7. ✅ **[H11] Tratar CFDI tipo `P` con atributos opcionales**
    `Certificado` opcional cuando `TipoDeComprobante == "P"`, según el XSD.
 
-8. **Validación de catálogos SAT en parse-time**
-   Parcialmente cubierto por `validate_xsd=True` (valida contra el XSD oficial,
-   que incluye los catálogos). Pendiente: modo que solo valide catálogos sin
-   exigir el esquema completo.
+8. ✅ **Validación de catálogos SAT standalone**
+   `validate_catalogs=True` en `CFDIParser`/`CFDIPDF`: valida las claves SAT
+   (moneda, régimen, uso CFDI, impuestos, forma de pago…) sin exigir el XSD.
 
-9. **Soporte de complementos comunes**
-   ✅ Nómina 1.2 y Carta Porte 3.1 (modelos + parser + templates).
-   Pendiente: **IEPS / LeyendasFiscales / InformaciónGlobal** (siguen como
-   `dict` genérico en `cfdi.complementos`).
+9. ✅ **Soporte de complementos comunes**
+   Nómina 1.2, Carta Porte 3.1, **Leyendas Fiscales**, **IEPS** e
+   **Información Global** (modelos + parser + templates). La `Addenda` se
+   detecta (`has_addenda`) e **ignora** por seguridad.
 
 10. ✅ **Formatear fechas con zona horaria**
     `format_date` ahora parsea con `datetime.fromisoformat` y formatea el offset
     (`15/01/2024 10:30:00 -06:00`, `Z`, fecha sola).
 
-11. **`Addenda` del comprobante**
-    Los CFDIs pueden traer `cfdi:Addenda` (XML arbitrario del emisor). Hoy el
-    parser no lo contempla. Decidir si ignorarlo explícitamente (recomendado
-    por seguridad) o parsearlo.
+11. ✅ **`Addenda` del comprobante**
+    Se ignora explícitamente (recomendado por seguridad): el parser la detecta
+    (`cfdi.has_addenda`) sin parsear su contenido arbitrario.
+
+### Fiscales resueltos
+
+- ✅ **QR `fe` percent-encoded**: el parámetro base64 (`+/=`) se codifica con
+  `urllib.parse.quote`, evitando que un query string lo altere en el portal SAT.
+- ✅ **Store de certificados SAT**: `verify_sello_sat(cfdi)` sin certificado
+  busca automáticamente por `NoCertificadoSAT` en
+  `~/.cache/cfdi-pdf/certs/` (o `CFDI_PDF_SAT_CERTS_DIR`).
 
 ## Largo plazo / roadmap
 

@@ -7,7 +7,10 @@ from pydantic import BaseModel, Field
 from .carta_porte import CartaPorte
 from .concepto import Concepto
 from .emisor import Emisor
+from .ieps import IEPS
 from .impuestos import ImpuestosComprobante
+from .informacion_global import InformacionGlobal
+from .leyendas import LeyendasFiscales
 from .nomina import Nomina
 from .pagos import Pagos
 from .receptor import Receptor
@@ -54,6 +57,22 @@ class CFDI(BaseModel):
     nomina: Nomina | None = Field(None, description="Complemento de Nómina 1.2")
 
     carta_porte: CartaPorte | None = Field(None, description="Complemento de Carta Porte 3.1")
+
+    informacion_global: InformacionGlobal | None = Field(
+        None, description="Información de comprobante global (InformacionGlobal)"
+    )
+
+    leyendas_fiscales: LeyendasFiscales | None = Field(
+        None, description="Complemento de Leyendas Fiscales"
+    )
+
+    ieps: IEPS | None = Field(None, description="Complemento de IEPS")
+
+    has_addenda: bool = Field(
+        False,
+        description="Indica si el comprobante incluye cfdi:Addenda (se ignora "
+        "por seguridad: es XML arbitrario del emisor, no fiscal)",
+    )
 
     cadena_original: str | None = Field(
         None,

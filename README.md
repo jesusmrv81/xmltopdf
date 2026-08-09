@@ -182,6 +182,7 @@ CFDIPDF(
     currency_format: bool = True,
     custom_template_paths: list[str | Path] | None = None,
     validate_xsd: bool = False,
+    validate_catalogs: bool = False,
 )
 ```
 
@@ -224,7 +225,31 @@ if SelloVerifier.verify_sello_sat(cfdi, sat_certificate_pem):
 ```
 
 > **Nota**: la verificación de `SelloSAT` requiere el certificado X.509 del SAT
-> (no viene embebido en el XML); indícalo con `NoCertificadoSAT`.
+> (no viene embebido en el XML). Se puede pasar explícitamente o dejar el
+> certificado en el **store** (`~/.cache/cfdi-pdf/certs/` o la variable
+> `CFDI_PDF_SAT_CERTS_DIR`); entonces se busca automáticamente por
+> `NoCertificadoSAT`:
+>
+> ```python
+> if SelloVerifier.verify_sello_sat(cfdi):  # busca en el store
+>     print("✓ SelloSAT válido")
+> ```
+
+### Validación de catálogos (sin XSD)
+
+```python
+from cfdi_pdf import CFDIPDF
+
+pdf = CFDIPDF(validate_catalogs=True)  # valida claves SAT (moneda, régimen, uso CFDI…)
+cfdi = pdf.parse("factura.xml")  # lanza InvalidCFDIError si alguna clave es inválida
+```
+
+### Complementos soportados
+
+Además de Pagos 2.0, Nómina 1.2 y Carta Porte 3.1, se modelan **Leyendas
+Fiscales**, **IEPS** e **Información Global** (se renderizan en los templates).
+La `cfdi:Addenda` se detecta (`cfdi.has_addenda`) pero **se ignora** por
+seguridad: es XML arbitrario del emisor, sin valor fiscal.
 
 ### Recursos del SAT (XSLT/XSD) — descarga en runtime
 

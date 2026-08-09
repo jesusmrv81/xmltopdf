@@ -7,10 +7,25 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Añadido
+- **Validación de catálogos standalone**: `validate_catalogs=True` en
+  `CFDIParser`/`CFDIPDF` valida las claves SAT (moneda, régimen, uso CFDI,
+  impuestos, forma de pago…) sin exigir el XSD completo
+- **Complementos**: modelos + parser + render para **Leyendas Fiscales**,
+  **IEPS** y **Información Global**; `cfdi:Addenda` se detecta (`has_addenda`)
+  y se ignora por seguridad (XML arbitrario no fiscal)
+- **QR**: el parámetro `fe` (base64) ahora se codifica por percent-encoding
+  (`+/=` → `%2B%2F%3D`)
+- **`verify_sello_sat`**: si no se pasa certificado, se busca automáticamente
+  en el **store de certificados** (`~/.cache/cfdi-pdf/certs/` o
+  `CFDI_PDF_SAT_CERTS_DIR`) por `NoCertificadoSAT`
+
+### Corregido
+- Parser `recover=False` (un XML malformado lanza `XMLParseError`)
+- Examples arreglados (usaban la API antigua)
+
 ### Cambiado
-- CI: `pip-audit` ahora corre también en **PRs** (no solo en push a main);
-  caché de recursos SAT (`~/.cache/cfdi-pdf`) en el job de tests; action
-  `pypa/gh-action-pypi-publish` pinneada por SHA (v1.14.2)
+- CI: `pip-audit` en PRs, caché de recursos SAT, action de PyPI pinneado
 
 ## [0.2.0] - 2026-08-09
 

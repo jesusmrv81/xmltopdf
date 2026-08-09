@@ -1,0 +1,25 @@
+{% if cfdi.leyendas_fiscales %}
+<section class="leyendas-section">
+    <h3>Leyendas Fiscales</h3>
+    <div class="pago-compact" style="page-break-inside: avoid; break-inside: avoid;">
+        <table class="doctos-compact">
+            <thead>
+                <tr>
+                    <th>Disposición Fiscal</th>
+                    <th>Norma</th>
+                    <th>Texto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leyenda in cfdi.leyendas_fiscales.leyenda %}
+                <tr>
+                    <td>{{ leyenda.disposicion_fiscal }}</td>
+                    <td>{{ leyenda.norma or '-' }}</td>
+                    <td>{{ leyenda.texto_leyenda }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}

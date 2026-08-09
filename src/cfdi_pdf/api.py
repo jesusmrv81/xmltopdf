@@ -39,6 +39,7 @@ class CFDIPDF:
         currency_format: bool = True,
         custom_template_paths: list[str | Path] | None = None,
         validate_xsd: bool = False,
+        validate_catalogs: bool = False,
     ) -> None:
         """
         Initialize CFDIPDF converter.
@@ -50,12 +51,14 @@ class CFDIPDF:
             custom_template_paths: Additional paths to search for templates
             validate_xsd: If True, validate the CFDI against the official SAT
                 XSD schema (cfdv40.xsd) during parsing.
+            validate_catalogs: If True, validate the SAT catalog keys (moneda,
+                régimen fiscal, uso CFDI, impuestos, etc.) during parsing.
         """
         self._template = template
         self._locale = locale
         self._currency_format = currency_format
 
-        self._parser = CFDIParser(validate_xsd=validate_xsd)
+        self._parser = CFDIParser(validate_xsd=validate_xsd, validate_catalogs=validate_catalogs)
         self._qr_generator = SATQRGenerator()
 
         template_paths = [Path(p) for p in custom_template_paths] if custom_template_paths else None

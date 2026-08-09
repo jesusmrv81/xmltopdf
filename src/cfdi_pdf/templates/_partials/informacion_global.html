@@ -1,0 +1,10 @@
+{% if cfdi.informacion_global %}
+<section class="informacion-global">
+    <div class="fiscal-bar">
+        <div class="fiscal-item">
+            <span class="fiscal-label">Comprobante Global</span>
+            <span class="fiscal-value">Período {{ cfdi.informacion_global.periodicidad }} · Meses: {{ cfdi.informacion_global.meses }} · Año: {{ cfdi.informacion_global.anio }}</span>
+        </div>
+    </div>
+</section>
+{% endif %}

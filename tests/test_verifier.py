@@ -3,6 +3,7 @@
 import base64
 import datetime
 import re
+from pathlib import Path
 
 import pytest
 from cryptography import x509
@@ -112,6 +113,45 @@ class TestSelloVerifier:
         cfdi = CFDIParser().parse_string(xml_signed)
 
         assert SelloVerifier.verify_sello_sat(cfdi, pem) is True
+
+    def test_verify_sello_sat_from_store(
+        self, valid_cfdi_40_xml: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """SelloSAT se resuelve automáticamente desde el store por NoCertificadoSAT."""
+        from cfdi_pdf.crypto.verifier import get_sat_cert_store_dir
+
+        key, cert = _make_key_and_cert()
+        store = tmp_path / "certs"
+        store.mkdir()
+        (store / "sat-test.pem").write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+        monkeypatch.setenv("CFDI_PDF_SAT_CERTS_DIR", str(store))
+        assert get_sat_cert_store_dir() == store
+
+        # El NoCertificadoSAT forma parte de la cadena del timbre: se cambia ANTES de firmar
+        xml_base = re.sub(
+            r'NoCertificadoSAT="[^"]*"',
+            f'NoCertificadoSAT="{cert.serial_number}"',
+            valid_cfdi_40_xml,
+        )
+        tfd_cadena = CFDIParser().parse_string(xml_base).timbre_fiscal.cadena_origen
+        assert tfd_cadena is not None
+
+        sello_sat = _sign(tfd_cadena, key)
+        xml_signed = re.sub(r'SelloSAT="[^"]*"', f'SelloSAT="{sello_sat}"', xml_base)
+        cfdi = CFDIParser().parse_string(xml_signed)
+
+        # Sin pasar certificado: se busca en el store por número de serie
+        assert SelloVerifier.verify_sello_sat(cfdi) is True
+
+    def test_verify_sello_sat_store_missing(
+        self, valid_cfdi_40_xml: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Si no hay certificado en el store, lanza InvalidCFDIError."""
+        monkeypatch.setenv("CFDI_PDF_SAT_CERTS_DIR", str(tmp_path / "no_existe"))
+
+        cfdi = CFDIParser().parse_string(valid_cfdi_40_xml)
+        with pytest.raises(InvalidCFDIError):
+            SelloVerifier.verify_sello_sat(cfdi)
 
     def test_verify_requires_timbre(self, valid_cfdi_40_xml: str) -> None:
         """Sin timbre fiscal, la verificación debe lanzar InvalidCFDIError."""

@@ -211,15 +211,14 @@ impacto, fix sugerido y **estado** (✅ implementado en `develop` / ⬜ pendient
 
 ## No considerados bug (decisiones con riesgo documentado)
 
-### D1. QR sin percent-encoding del parámetro `fe`
+### D1. QR sin percent-encoding del parámetro `fe` — ✅ Resuelto
 
-- `src/cfdi_pdf/qr/generator.py:113-133` construye la URL sin encoding, y el
-  test `test_url_no_encoding` (`tests/test_qr.py:54-80`) lo fija como
-  comportamiento intencional. Los últimos 8 chars del sello son base64 y pueden
-  incluir `+/=`, que en un query string tienen significado especial. Es un
-  **riesgo**: si el portal SAT no tolera esos caracteres, la verificación QR
-  podría fallar para esos CFDI. Se recomienda validar contra el portal oficial
-  y, si es necesario, aplicar `urllib.parse.quote` solo al valor de `fe`.
+- `src/cfdi_pdf/qr/generator.py` construía la URL sin encoding, y el test
+  `test_url_no_encoding` (`tests/test_qr.py`) lo fijaba como comportamiento
+  intencional. Los últimos 8 chars del sello son base64 y pueden incluir `+/=`,
+  que en un query string tienen significado especial. **Resuelto**: `fe` se
+  codifica con `urllib.parse.quote(..., safe="")` (`+`→`%2B`, `/`→`%2F`,
+  `=`→`%3D`).
 
 ### D2. Cadena original "simplificada" de `SATHelpers.build_cadena_original`
 

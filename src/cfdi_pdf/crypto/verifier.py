@@ -4,11 +4,18 @@ La cadena original del comprobante se genera en el parser usando la XSLT
 oficial ``cadenaoriginal_4_0.xslt``; la del timbre con
 ``cadenaoriginal_TFD_1_1.xslt``. El sello se valida con RSA (PKCS#1 v1.5)
 contra el hash SHA-256 de la cadena original.
+
+Para ``verify_sello_sat`` se puede pasar el certificado del SAT directamente o
+dejarlo en el **store de certificados** (``~/.cache/cfdi-pdf/certs/`` o la
+variable ``CFDI_PDF_SAT_CERTS_DIR``); se buscará el que coincida con
+``NoCertificadoSAT`` por número de serie.
 """
 
 import base64
 import logging
+import os
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from cryptography import x509
@@ -25,6 +32,16 @@ logger = logging.getLogger(__name__)
 
 # Base64 puede traer saltos de línea/espacios dentro del atributo
 _WHITESPACE = re.compile(r"\s+")
+
+
+def get_sat_cert_store_dir() -> Path:
+    """Directorio del store de certificados SAT (override con CFDI_PDF_SAT_CERTS_DIR)."""
+    env = os.environ.get("CFDI_PDF_SAT_CERTS_DIR")
+    if env:
+        return Path(env).expanduser()
+    from ..sat.resources import default_cache_dir
+
+    return default_cache_dir() / "certs"
 
 
 class SelloVerifier:
@@ -55,17 +72,20 @@ class SelloVerifier:
         )
 
     @staticmethod
-    def verify_sello_sat(cfdi: "CFDI", sat_certificate: str | bytes) -> bool:
+    def verify_sello_sat(cfdi: "CFDI", sat_certificate: str | bytes | None = None) -> bool:
         """
         Verifica la firma del SAT (``SelloSAT``).
 
-        El certificado del SAT no está embebido en el XML; debe pasarse el
-        certificado X.509 del SAT identificado por ``NoCertificadoSAT``. Se
-        acepta en formato PEM (``-----BEGIN CERTIFICATE-----``), DER (bytes) o
-        base64 (como el atributo ``Certificado`` de un CFDI).
+        El certificado del SAT no está embebido en el XML. Se acepta:
+
+        - ``sat_certificate`` explícito: PEM, DER (bytes) o base64 (como el
+          atributo ``Certificado`` de un CFDI).
+        - ``None``: se busca en el store de certificados (``get_sat_cert_store_dir``)
+          el certificado cuyo número de serie coincida con ``NoCertificadoSAT``.
 
         Raises:
-            InvalidCFDIError: si el CFDI no tiene timbre o el certificado es inválido.
+            InvalidCFDIError: si el CFDI no tiene timbre, no se encuentra el
+                certificado o el certificado es inválido.
         """
         if cfdi.timbre_fiscal is None:
             raise InvalidCFDIError("CFDI incompleto para verificar SelloSAT: falta timbre fiscal")
@@ -74,7 +94,11 @@ class SelloVerifier:
                 "CFDI incompleto para verificar SelloSAT: falta cadena original del timbre"
             )
 
-        certificate_der = _certificate_to_der(sat_certificate)
+        if sat_certificate is not None:
+            certificate_der = _certificate_to_der(sat_certificate)
+        else:
+            certificate_der = _find_sat_certificate(cfdi.timbre_fiscal.no_certificado_sat)
+
         return _verify_signature(
             cadena_original=cfdi.timbre_fiscal.cadena_origen,
             sello=cfdi.timbre_fiscal.sello_sat,
@@ -82,16 +106,47 @@ class SelloVerifier:
         )
 
 
+def _find_sat_certificate(no_certificado_sat: str) -> bytes:
+    """Busca en el store un certificado SAT cuyo número de serie coincida."""
+    store_dir = get_sat_cert_store_dir()
+    serial = _WHITESPACE.sub("", no_certificado_sat).upper()
+
+    if not store_dir.is_dir():
+        raise InvalidCFDIError(
+            "No se encontró el certificado SAT: el store "
+            f"'{store_dir}' no existe. Proporciona el certificado en "
+            "verify_sello_sat(cfdi, cert) o agrega el PEM a ese directorio."
+        )
+
+    for path in sorted(store_dir.iterdir()):
+        if not path.is_file():
+            continue
+        try:
+            certificate = _load_certificate(path.read_bytes())
+        except (ValueError, TypeError):
+            continue
+        serial_decimal = str(certificate.serial_number).upper()
+        serial_hex = format(certificate.serial_number, "X")
+        if serial in (serial_decimal, serial_hex, serial_hex.zfill(len(serial))):
+            return certificate.public_bytes(serialization.Encoding.DER)
+
+    raise InvalidCFDIError(
+        f"No se encontró el certificado SAT con serie {no_certificado_sat} "
+        f"en el store '{store_dir}'"
+    )
+
+
+def _load_certificate(data: bytes) -> x509.Certificate:
+    """Carga un certificado PEM o DER."""
+    if data.lstrip().startswith(b"-----BEGIN"):
+        return x509.load_pem_x509_certificate(data)
+    return x509.load_der_x509_certificate(data)
+
+
 def _certificate_to_der(certificate: str | bytes) -> bytes:
     """Convierte un certificado PEM / DER / base64 a bytes DER."""
     if isinstance(certificate, bytes):
-        # Bytes: puede ser PEM o DER.
-        if certificate.lstrip().startswith(b"-----BEGIN"):
-            return x509.load_pem_x509_certificate(certificate).public_bytes(
-                serialization.Encoding.DER
-            )
-        return certificate
-    # String: puede ser PEM o base64.
+        return _load_certificate(certificate).public_bytes(serialization.Encoding.DER)
     if "-----BEGIN CERTIFICATE-----" in certificate:
         return x509.load_pem_x509_certificate(certificate.encode("utf-8")).public_bytes(
             serialization.Encoding.DER

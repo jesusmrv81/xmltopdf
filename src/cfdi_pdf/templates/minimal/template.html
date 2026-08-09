@@ -224,8 +224,11 @@
         </section>
         {% endif %}
 
+        {% include "_partials/informacion_global.html" %}
         {% include "_partials/nomina.html" %}
         {% include "_partials/carta_porte.html" %}
+        {% include "_partials/leyendas.html" %}
+        {% include "_partials/ieps.html" %}
 
         <!-- Totals (hidden for payment complements) -->
         {% if cfdi.tipo_comprobante != 'P' %}

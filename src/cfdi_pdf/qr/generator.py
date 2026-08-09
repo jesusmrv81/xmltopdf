@@ -4,6 +4,7 @@ import logging
 from decimal import Decimal
 from io import BytesIO
 from typing import TYPE_CHECKING
+from urllib.parse import quote
 
 import qrcode
 from qrcode.constants import ERROR_CORRECT_M
@@ -118,9 +119,15 @@ class SATQRGenerator:
         total: Decimal,
         sello_cfd: str,
     ) -> str:
-        """Build SAT verification URL (no encoding applied)."""
+        """Build SAT verification URL.
+
+        El parámetro ``fe`` (últimos 8 caracteres del sello, base64) se codifica
+        por percent-encoding: puede contener ``+``, ``/`` y ``=``, que tienen
+        significado especial en un query string y podrían alterar la lectura en
+        el portal del SAT.
+        """
         total_formatted = self._format_total(total)
-        fe = sello_cfd[-8:]
+        fe = quote(sello_cfd[-8:], safe="")
         uuid_upper = uuid.upper()
 
         return (

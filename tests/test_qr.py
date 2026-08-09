@@ -51,8 +51,8 @@ class TestSATQRGenerator:
         # Should use last 8 chars: "vwx234"
         assert len(sello[-8:]) == 8
 
-    def test_url_no_encoding(self) -> None:
-        """Test that URL is built without URL encoding."""
+    def test_url_encodes_fe(self) -> None:
+        """El parámetro fe (base64) debe ir con percent-encoding."""
         generator = SATQRGenerator()
 
         # Use sello with special chars that would be encoded
@@ -68,11 +68,11 @@ class TestSATQRGenerator:
 
         # UUID should be uppercase
         assert "id=CCE4D168-1234-5678-9ABC-DEF012345678" in url
-        # No URL encoding for special chars (last 8 chars of sello)
-        assert "fe=u901+/==" in url
-        assert "%2F" not in url
-        assert "%3D" not in url
-        assert "%2B" not in url
+        # fe debe estar percent-coded: + -> %2B, / -> %2F, = -> %3D
+        assert "fe=u901%2B%2F%3D%3D" in url
+        assert "%2B" in url
+        assert "%2F" in url
+        assert "%3D" in url
         # Verify structure
         assert url.startswith("https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?")
         assert "re=AAA010101AAA" in url

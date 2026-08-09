@@ -9,6 +9,7 @@ from lxml import etree
 from ..exceptions import InvalidCFDIError, XMLParseError
 from ..models import (
     CFDI,
+    IEPS,
     Autotransporte,
     CartaPorte,
     Concepto,
@@ -23,6 +24,9 @@ from ..models import (
     ImpuestosConcepto,
     ImpuestosDR,
     ImpuestosP,
+    InformacionGlobal,
+    Leyenda,
+    LeyendasFiscales,
     Mercancia,
     Mercancias,
     Nomina,
@@ -37,16 +41,19 @@ from ..models import (
     Receptor,
     Retencion,
     RetencionDR,
+    RetencionIEPS,
     RetencionP,
     TimbreFiscalDigital,
     Totales,
     Traslado,
     TrasladoDR,
+    TrasladoIEPS,
     TrasladoP,
     Ubicacion,
     Ubicaciones,
 )
 from ..sat.cadena_original import cadena_original_comprobante, cadena_original_tfd
+from ..sat.catalog_validator import validate_catalogs
 from .sanitizer import XMLSanitizer
 from .xsd_validator import CFDIXSDValidator
 
@@ -58,6 +65,8 @@ TFD_NS = "http://www.sat.gob.mx/TimbreFiscalDigital"
 PAGOS20_NS = "http://www.sat.gob.mx/Pagos20"
 NOMINA12_NS = "http://www.sat.gob.mx/nomina12"
 CARTA_PORTE31_NS = "http://www.sat.gob.mx/CartaPorte31"
+LEYENDAS_NS = "http://www.sat.gob.mx/leyendasFiscales"
+IEPS_NS = "http://www.sat.gob.mx/ieps"
 
 NAMESPACES = {
     "cfdi": CFDI_NS,
@@ -68,16 +77,19 @@ NAMESPACES = {
 class CFDIParser:
     """Secure XML parser for CFDI 4.0 documents."""
 
-    def __init__(self, validate_xsd: bool = False) -> None:
+    def __init__(self, validate_xsd: bool = False, validate_catalogs: bool = False) -> None:
         """
         Initialize parser with security protections.
 
         Args:
             validate_xsd: Si es True, valida el documento contra el esquema
                 XSD oficial del SAT (cfdv40.xsd) durante el parseo.
+            validate_catalogs: Si es True, valida las claves de catálogo SAT
+                (moneda, régimen, uso CFDI, impuestos, etc.) sin exigir el XSD.
         """
         self._sanitizer = XMLSanitizer()
         self._xsd_validator = CFDIXSDValidator() if validate_xsd else None
+        self._validate_catalogs = validate_catalogs
         self._sanitizer = XMLSanitizer()
 
     def parse_file(self, xml_path: str | Path) -> CFDI:
@@ -166,7 +178,7 @@ class CFDIParser:
 
         tipo_comprobante = self._get_attr(root, "TipoDeComprobante")
 
-        return CFDI(
+        cfdi = CFDI(
             version=version,
             serie=self._get_optional_attr(root, "Serie"),
             folio=self._get_optional_attr(root, "Folio"),
@@ -197,9 +209,20 @@ class CFDIParser:
             pagos=self._parse_pagos(root),
             nomina=self._parse_nomina(root),
             carta_porte=self._parse_carta_porte(root),
+            informacion_global=self._parse_informacion_global(root),
+            leyendas_fiscales=self._parse_leyendas(root),
+            ieps=self._parse_ieps(root),
+            has_addenda=root.find(f"{{{CFDI_NS}}}Addenda") is not None,
             complementos=self._parse_complementos(root),
             cadena_original=self._build_cadena_original_comprobante(root),
         )
+
+        if self._validate_catalogs:
+            errors = validate_catalogs(cfdi)
+            if errors:
+                raise InvalidCFDIError("Claves de catálogo SAT inválidas: " + "; ".join(errors[:5]))
+
+        return cfdi
 
     # ── sub-element parsers ───────────────────────────────────────────────────
 
@@ -574,6 +597,10 @@ class CFDIParser:
                 continue
             if child.tag.endswith("}CartaPorte"):
                 continue
+            if child.tag.endswith("}LeyendasFiscales"):
+                continue
+            if child.tag.endswith("}IEPS"):
+                continue
 
             tag = child.tag
             local_name = tag.split("}")[1] if "}" in tag else tag
@@ -581,6 +608,72 @@ class CFDIParser:
             logger.info("Parsed complemento: %s (partial support)", local_name)
 
         return complementos
+
+    # ── Información Global / Leyendas Fiscales / IEPS ─────────────────────────
+
+    def _parse_informacion_global(self, root: etree._Element) -> InformacionGlobal | None:
+        """Parse el nodo InformacionGlobal (hijo directo de Comprobante)."""
+        elem = root.find(f"{{{CFDI_NS}}}InformacionGlobal")
+        if elem is None:
+            return None
+        return InformacionGlobal(
+            Periodicidad=self._get_attr(elem, "Periodicidad"),
+            Meses=self._get_attr(elem, "Meses"),
+            Año=self._get_int(elem, "Año"),
+        )
+
+    def _parse_leyendas(self, root: etree._Element) -> LeyendasFiscales | None:
+        """Parse el complemento de Leyendas Fiscales."""
+        complemento_elem = root.find(f"{{{CFDI_NS}}}Complemento")
+        if complemento_elem is None:
+            return None
+        elem = complemento_elem.find(f"{{{LEYENDAS_NS}}}LeyendasFiscales")
+        if elem is None:
+            return None
+
+        leyendas = [
+            Leyenda(
+                disposicionFiscal=self._get_attr(child, "disposicionFiscal"),
+                norma=self._get_optional_attr(child, "norma"),
+                textoLeyenda=self._get_attr(child, "textoLeyenda"),
+            )
+            for child in elem.findall(f"{{{LEYENDAS_NS}}}Leyenda")
+        ]
+
+        return LeyendasFiscales(version=self._get_attr(elem, "version"), Leyenda=leyendas)
+
+    def _parse_ieps(self, root: etree._Element) -> IEPS | None:
+        """Parse el complemento de IEPS."""
+        complemento_elem = root.find(f"{{{CFDI_NS}}}Complemento")
+        if complemento_elem is None:
+            return None
+        elem = complemento_elem.find(f"{{{IEPS_NS}}}IEPS")
+        if elem is None:
+            return None
+
+        traslados = [
+            TrasladoIEPS(
+                Base=self._get_optional_decimal(child, "Base"),
+                Impuesto=self._get_attr(child, "Impuesto"),
+                TipoFactor=self._get_optional_attr(child, "TipoFactor"),
+                TasaOCuota=self._get_optional_decimal(child, "TasaOCuota"),
+                Importe=self._get_optional_decimal(child, "Importe"),
+            )
+            for child in elem.findall(f"{{{IEPS_NS}}}Traslado")
+        ]
+        retenciones = [
+            RetencionIEPS(
+                Impuesto=self._get_attr(child, "Impuesto"),
+                Importe=self._get_optional_decimal(child, "Importe"),
+            )
+            for child in elem.findall(f"{{{IEPS_NS}}}Retencion")
+        ]
+
+        return IEPS(
+            version=self._get_attr(elem, "version"),
+            Traslado=traslados,
+            Retencion=retenciones,
+        )
 
     # ── complemento de Nómina 1.2 ─────────────────────────────────────────────
 
