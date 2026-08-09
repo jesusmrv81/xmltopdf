@@ -7,6 +7,11 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Cambiado
+- CI: `pip-audit` ahora corre también en **PRs** (no solo en push a main);
+  caché de recursos SAT (`~/.cache/cfdi-pdf`) en el job de tests; action
+  `pypa/gh-action-pypi-publish` pinneada por SHA (v1.14.2)
+
 ## [0.2.0] - 2026-08-09
 
 ### Añadido

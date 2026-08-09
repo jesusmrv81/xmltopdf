@@ -43,6 +43,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: "pip"
 
+    - name: Cache SAT resources (XSLT/XSD)
+      uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca  # v6.1.0
+      with:
+        path: ~/.cache/cfdi-pdf
+        key: sat-resources-${{ hashFiles('src/cfdi_pdf/sat/resources.py') }}
+
     - name: Cache & install system deps (WeasyPrint)
       uses: awalsh128/cache-apt-pkgs-action@v1.6.0
       with:
@@ -99,7 +105,8 @@ jobs:
   audit:
     name: Security audit (pip-audit)
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Correr en PRs y en push a main (para no esperar a que lleguen a main)
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     permissions:
       contents: read
 
@@ -217,6 +224,6 @@ jobs:
 
     - name: Publish to PyPI (OIDC)
       if: steps.tag_check.outputs.exists == 'false'
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2
       with:
         print-hash: true

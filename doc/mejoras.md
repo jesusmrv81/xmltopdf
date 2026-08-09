@@ -40,7 +40,9 @@ los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
 6. ✅ **Tests para la CLI** (`tests/test_cli.py`)
    `cli.py` ahora tiene cobertura: conversión simple, batch, `--list-templates`,
    `--version`, archivo inexistente e XML inválido. Se corrigió además el bug
-   de `--list-templates` sin argumentos (exit 2).## Medio plazo
+   de `--list-templates` sin argumentos (exit 2).
+
+## Medio plazo
 
 7. ✅ **[H11] Tratar CFDI tipo `P` con atributos opcionales**
    `Certificado` opcional cuando `TipoDeComprobante == "P"`, según el XSD.
@@ -55,10 +57,9 @@ los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
    Pendiente: **IEPS / LeyendasFiscales / InformaciónGlobal** (siguen como
    `dict` genérico en `cfdi.complementos`).
 
-10. **Formatear fechas con zona horaria**
-    `Formatters.format_date` no maneja offset (`2024-01-15T10:30:00-06:00`).
-    El SAT emite con zona; parsear con `datetime.fromisoformat` y mostrar
-    en hora local o mantener el offset explícitamente.
+10. ✅ **Formatear fechas con zona horaria**
+    `format_date` ahora parsea con `datetime.fromisoformat` y formatea el offset
+    (`15/01/2024 10:30:00 -06:00`, `Z`, fecha sola).
 
 11. **`Addenda` del comprobante**
     Los CFDIs pueden traer `cfdi:Addenda` (XML arbitrario del emisor). Hoy el
@@ -68,7 +69,8 @@ los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
 ## Largo plazo / roadmap
 
 12. ✅ **Validación contra XSD del SAT**
-    `cfdv40.xsd` + catálogos empaquetados; `validate_xsd=True` en parser y API.
+    `cfdv40.xsd` + catálogos descargados en runtime; `validate_xsd=True` en
+    parser y API.
 
 13. ✅ **API REST / servidor** — implementado como patrón de integración
     (`examples/fastapi_service.py`) + `render_bytes_from_string()`. La librería
@@ -93,7 +95,8 @@ los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
 
 ## Higiene menor
 
-17. `logger.warning(f"...")` → lazy formatting `[H8]`.
+17. ✅ `logger.warning(f"...")` → lazy formatting `[H8]`.
 18. Actualizar `README.md` (requisito lxml, comandos de tests, estructura) `[H9]`.
 19. Añadir `doc/` al árbol de estructura del README o un enlace.
 20. Mover PDFs/XMLs de prueba fuera de la raíz `[H10]`.
+21. ✅ `pip-audit` en PRs + caché de recursos SAT + pin del action de PyPI.
