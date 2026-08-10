@@ -102,7 +102,8 @@ los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
 ## Higiene menor
 
 17. ✅ `logger.warning(f"...")` → lazy formatting `[H8]`.
-18. Actualizar `README.md` (requisito lxml, comandos de tests, estructura) `[H9]`.
-19. Añadir `doc/` al árbol de estructura del README o un enlace.
+18. ✅ **README actualizado** — sección Desarrollo (ruff format, sin `black`),
+    estructura con `doc/`, y referencias al API actual `[H9]`.
+19. ✅ **`doc/` en el árbol del README** — añadido al árbol de estructura.
 20. Mover PDFs/XMLs de prueba fuera de la raíz `[H10]`.
 21. ✅ `pip-audit` en PRs + caché de recursos SAT + pin del action de PyPI.

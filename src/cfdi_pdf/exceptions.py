@@ -41,6 +41,12 @@ class XMLParseError(CFDIPDFError):
     pass
 
 
+class XMLTooLargeError(CFDIPDFError):
+    """Raised when the XML document exceeds the configured size limit."""
+
+    pass
+
+
 class UTF8SanitizationError(CFDIPDFError):
     """Raised when UTF-8 sanitization encounters unrecoverable characters."""
 

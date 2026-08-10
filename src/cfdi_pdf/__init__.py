@@ -14,6 +14,7 @@ from .exceptions import (
     TemplateRenderError,
     UTF8SanitizationError,
     XMLParseError,
+    XMLTooLargeError,
 )
 
 try:
@@ -33,4 +34,5 @@ __all__ = [
     "TemplateRenderError",
     "UTF8SanitizationError",
     "XMLParseError",
+    "XMLTooLargeError",
 ]

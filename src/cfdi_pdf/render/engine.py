@@ -24,6 +24,36 @@ _LOGO_MIME_TYPES: dict[str, str] = {
     ".svg": "image/svg+xml",
 }
 
+# Magic bytes (firma) para verificar que el archivo coincide con la extensión
+_LOGO_MAGIC: dict[str, bytes] = {
+    ".png": b"\x89PNG\r\n\x1a\n",
+    ".jpg": b"\xff\xd8\xff",
+    ".jpeg": b"\xff\xd8\xff",
+}
+
+# Tamaño máximo del logo (1 MB)
+_MAX_LOGO_SIZE = 1_000_000
+
+
+def _valid_logo(path: Path, data: bytes) -> tuple[bool, str]:
+    """Valida extensión, firma (magic bytes) y tamaño de un logo."""
+    suffix = path.suffix.lower()
+    if suffix not in _LOGO_MIME_TYPES:
+        return False, f"extensión de logo no permitida: '{suffix}'"
+    if len(data) > _MAX_LOGO_SIZE:
+        return False, f"logo excede el tamaño máximo de {_MAX_LOGO_SIZE} bytes"
+
+    magic = _LOGO_MAGIC.get(suffix)
+    if magic is not None and not data.startswith(magic):
+        return False, "la firma del archivo no coincide con la extensión"
+
+    if suffix == ".svg":
+        head = data[:1024].lstrip()
+        if not (head.startswith(b"<") or head.startswith(b"<?xml")):
+            return False, "el archivo SVG no es XML válido"
+
+    return True, ""
+
 
 class RenderEngine:
     """Renders CFDI to PDF using Jinja2 templates and WeasyPrint."""
@@ -156,7 +186,13 @@ class RenderEngine:
                 logger.warning("Logo file not found: %s", path)
                 return ""
             logo_bytes = path.read_bytes()
-            mime_type = _LOGO_MIME_TYPES.get(path.suffix.lower(), "image/png")
+
+            valid, reason = _valid_logo(path, logo_bytes)
+            if not valid:
+                logger.warning("Logo rechazado (%s): %s", path, reason)
+                return ""
+
+            mime_type = _LOGO_MIME_TYPES[path.suffix.lower()]
             return f"data:{mime_type};base64,{base64.b64encode(logo_bytes).decode()}"
         except OSError as exc:
             logger.warning("Failed to load logo: %s", exc)

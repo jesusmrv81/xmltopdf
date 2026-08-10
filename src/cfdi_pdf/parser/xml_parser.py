@@ -6,7 +6,7 @@ from pathlib import Path
 
 from lxml import etree
 
-from ..exceptions import InvalidCFDIError, XMLParseError
+from ..exceptions import InvalidCFDIError, XMLParseError, XMLTooLargeError
 from ..models import (
     CFDI,
     IEPS,
@@ -77,7 +77,12 @@ NAMESPACES = {
 class CFDIParser:
     """Secure XML parser for CFDI 4.0 documents."""
 
-    def __init__(self, validate_xsd: bool = False, validate_catalogs: bool = False) -> None:
+    def __init__(
+        self,
+        validate_xsd: bool = False,
+        validate_catalogs: bool = False,
+        max_xml_size: int | None = 10_000_000,
+    ) -> None:
         """
         Initialize parser with security protections.
 
@@ -86,10 +91,13 @@ class CFDIParser:
                 XSD oficial del SAT (cfdv40.xsd) durante el parseo.
             validate_catalogs: Si es True, valida las claves de catálogo SAT
                 (moneda, régimen, uso CFDI, impuestos, etc.) sin exigir el XSD.
+            max_xml_size: Tamaño máximo del documento XML en bytes (10 MB por
+                defecto). None desactiva el límite.
         """
         self._sanitizer = XMLSanitizer()
         self._xsd_validator = CFDIXSDValidator() if validate_xsd else None
         self._validate_catalogs = validate_catalogs
+        self._max_xml_size = max_xml_size
         self._sanitizer = XMLSanitizer()
 
     def parse_file(self, xml_path: str | Path) -> CFDI:
@@ -114,6 +122,11 @@ class CFDIParser:
         if not path.is_file():
             raise XMLParseError(f"Path is not a file: {path}")
 
+        if self._max_xml_size is not None and path.stat().st_size > self._max_xml_size:
+            raise XMLTooLargeError(
+                f"XML file exceeds the {self._max_xml_size} bytes size limit: {path}"
+            )
+
         try:
             content = path.read_text(encoding="utf-8")
             return self.parse_string(content)
@@ -136,6 +149,9 @@ class CFDIParser:
             XMLParseError: If XML is malformed or security issue detected
             InvalidCFDIError: If CFDI structure is invalid
         """
+        if self._max_xml_size is not None and len(xml_content.encode("utf-8")) > self._max_xml_size:
+            raise XMLTooLargeError(f"XML content exceeds the {self._max_xml_size} bytes size limit")
+
         xml_content = self._sanitizer.sanitize_text(xml_content)
         parser = self._create_secure_parser()
 

@@ -355,6 +355,22 @@ output_path = pdf.render(xml_path="factura.xml")
 ## Estructura del Proyecto
 
 ```
+.
+├── src/cfdi_pdf/     # Código de la biblioteca
+├── tests/            # Suite de tests (pytest)
+├── examples/         # Ejemplos de uso (incluye integración FastAPI)
+├── doc/              # Auditoría y documentación técnica
+│   ├── analisis.md   #   Arquitectura y decisiones de diseño
+│   ├── hallazgos.md  #   Bugs/defectos priorizados
+│   ├── mejoras.md    #   Mejoras recomendadas
+│   ├── seguridad.md  #   Análisis de seguridad y procedencia SAT
+│   └── calidad.md    #   Tests, cobertura y CI
+└── pyproject.toml
+```
+
+Detalle del paquete:
+
+```
 src/cfdi_pdf/
 ├── api.py              # API principal (CFDIPDF)
 ├── cli.py              # Interfaz de línea de comandos
@@ -416,13 +432,17 @@ src/cfdi_pdf/
 
 ```bash
 git clone https://github.com/jesusmrv81/xmltopdf.git
-cd cfdi-pdf
+cd xmltopdf
 
 python -m venv venv
 source venv/bin/activate      # Linux/macOS
 # venv\Scripts\activate       # Windows
 
 pip install -e ".[dev]"
+
+# Predescargar los recursos del SAT (XSLT/XSD) para la cadena original y la
+# validación XSD; de lo contrario se descargan en la primera ejecución
+cfdi-pdf --download-resources --all
 ```
 
 ### Ejecutar Tests
@@ -443,7 +463,7 @@ pytest tests/test_parser.py -v
 ```bash
 ruff check .          # linter
 ruff check --fix .    # auto-fix
-black .               # formatter
+ruff format .         # formatter (incluye bloques de código en Markdown)
 mypy src              # type checker
 ```
 

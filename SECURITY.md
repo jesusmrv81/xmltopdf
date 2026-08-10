@@ -61,6 +61,36 @@ env = SandboxedEnvironment(
 - Pydantic para validación estricta
 - Type hints en toda la API
 - Validación de namespaces SAT
+- Validación opcional contra el XSD oficial (`validate_xsd=True`) y de
+  catálogos (`validate_catalogs=True`)
+
+## Superficie de Ataque
+
+La biblioteca procesa **XML no confiable** (CFDIs de terceros/PACs) y puede
+descargar recursos del SAT en runtime. Estas son las superficies y sus
+controles actuales:
+
+| Superficie | Entrada | Controles |
+|---|---|---|
+| **Parseo XML** | Contenido XML | `resolve_entities=False` (XXE), `no_network=True`, `huge_tree=False` (bombas), `recover=False` (malformado falla), **límite de tamaño** (`max_xml_size`, 10 MB por defecto) |
+| **Sanitización** | Texto/atributos | Regex que elimina caracteres inválidos XML 1.0 |
+| **Validación estructural** | Documento | `validate_xsd=True` (esquema oficial `cfdv40.xsd`); `validate_catalogs=True` (claves SAT) |
+| **Templates Jinja2** | Templates (incl. personalizados) | `SandboxedEnvironment` + `select_autoescape(["html","xml"])` |
+| **QR** | Datos del CFDI | Parámetro `fe` percent-encoded; URL fija del portal SAT |
+| **Logo** | Archivo de imagen | Allowlist de extensiones (PNG/JPG/SVG), **magic bytes**, **límite de tamaño** (1 MB) |
+| **Recursos SAT** | Descarga de red | SHA-256 contra manifiesto empaquetado; fuentes configuradas |
+| **Verificación de sellos** | Sellos + certificados | RSA PKCS#1 v1.5 SHA-256; certificados solo de fuentes confiables |
+
+**Riesgos residuales a considerar al integrar la biblioteca:**
+
+1. **XML con `cfdi:Addenda`**: se detecta (`has_addenda`) pero su contenido se
+   **ignora** (no se parsea) por ser XML arbitrario del emisor, sin valor fiscal.
+2. **Complementos desconocidos**: se convierten a `dict` sin validar su
+   contenido (solo para render). No ejecutan código.
+3. **DoS por CPU**: WeasyPrint (render PDF) es CPU-intensivo; en un servicio,
+   limita el tamaño/concurrencia a nivel de aplicación.
+4. **`verify_sello_sat`**: si se usa el store de certificados, verifica que
+   solo contenga certificados del SAT de fuentes confiables.
 
 ## Mejores Prácticas para Usuarios
 
@@ -207,5 +237,5 @@ Agradecemos a quienes reportan vulnerabilidades de forma responsable. Los contri
 
 ---
 
-**Última actualización**: 2026-02-18
-**Versión**: 0.1.0
+**Última actualización**: 2026-08-09
+**Versión**: 0.2.0

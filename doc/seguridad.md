@@ -63,20 +63,18 @@ endurecimiento.
 1. ✅ **`recover=False`** en el parser lxml — un XML malformado ahora **falla
    ruidosamente** (`XMLParseError`) en vez de parsearse parcialmente. Un XML
    corrupto ya no puede generar un PDF con datos fiscales incompletos.
-2. **Limitar tamaño máximo de XML** antes de parsear (p.ej. 10 MB) para blindar
-   contra DoS de memoria más allá de `huge_tree=False` (que protege el árbol,
-   no el input completo).
-3. **Validar la `data:` URL del logo**: hoy se acepta cualquier extensión con
-   fallback a `image/png`. Restringir extensiones a un allowlist y opcionalmente
-   verificar la firma del archivo (magic bytes).
-4. **Considerar límite de tamaño del logo** para evitar PDFs gigantes por
-   logos de MB.
+2. ✅ **Límite de tamaño de XML** — `max_xml_size` (10 MB por defecto) en
+   `CFDIParser`/`CFDIPDF`; `XMLTooLargeError` si se excede.
+3. ✅ **Validación del logo** — allowlist de extensiones, verificación de magic
+   bytes (PNG/JPEG) y límite de 1 MB; un logo inválido se ignora (warning).
+4. ✅ **Superficie de ataque documentada** — sección en `SECURITY.md` con los
+   controles por entrada.
 5. **Pin de dependencias con hash** (`pip-audit` real — ver
    [hallazgos.md H4](hallazgos.md#h4-job-de-auditoría-pip-audit-del-ci-es-un-no-op)),
-   y añadir `pip-audit` a PRs.
+   y añadir `pip-audit` a PRs. *(El audit ya corre en PRs; falta el lock file.)*
 6. **Revisar `SECURITY.md`** existente: tiene proceso de reporte; añadir una
    sección de "superficie de ataque" para consumidores que integren la lib con
-   XML no confiable.
+   XML no confiable. *(Ya se añadió.)*
 
 ## Validación de integridad disponible
 

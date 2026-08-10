@@ -185,11 +185,14 @@ impacto, fix sugerido y **estado** (✅ implementado en `develop` / ⬜ pendient
   adaptaciones que el mirror, de modo que ambas convergen al mismo hash.
   Comando `cfdi-pdf --download-resources` para predescargar (deploys sin red).
 
-### H9. README desactualizado en requisitos de lxml
+### H9. README desactualizado — ✅ Corregido
 
-- **Dónde**: `README.md:296` dice `lxml >= 4.9.0`; `pyproject.toml:46` exige
-  `lxml>=5.0.0`. Además `README.md:361` menciona `tests/test_parser.py` (no
-  existe; los tests son `test_parser.py` — sí existe). Verificar referencias.
+- **Dónde**: `README.md` (requisitos, comandos de desarrollo, estructura).
+- **Problema**: decía `lxml >= 4.9.0` (pyproject exige `>=5.0.0`), usaba
+  `black` como formatter (ahora es `ruff format`, que también formatea
+  Markdown), y referenciaba una API vieja.
+- **Fix**: actualizado el README (requisitos, sección Desarrollo, estructura
+  con `doc/`) y los examples con la API actual.
 
 ### H10. Artifactos generados en el directorio raíz
 

@@ -40,6 +40,7 @@ class CFDIPDF:
         custom_template_paths: list[str | Path] | None = None,
         validate_xsd: bool = False,
         validate_catalogs: bool = False,
+        max_xml_size: int | None = 10_000_000,
     ) -> None:
         """
         Initialize CFDIPDF converter.
@@ -53,12 +54,18 @@ class CFDIPDF:
                 XSD schema (cfdv40.xsd) during parsing.
             validate_catalogs: If True, validate the SAT catalog keys (moneda,
                 régimen fiscal, uso CFDI, impuestos, etc.) during parsing.
+            max_xml_size: Maximum XML size in bytes (default 10 MB). None
+                disables the limit.
         """
         self._template = template
         self._locale = locale
         self._currency_format = currency_format
 
-        self._parser = CFDIParser(validate_xsd=validate_xsd, validate_catalogs=validate_catalogs)
+        self._parser = CFDIParser(
+            validate_xsd=validate_xsd,
+            validate_catalogs=validate_catalogs,
+            max_xml_size=max_xml_size,
+        )
         self._qr_generator = SATQRGenerator()
 
         template_paths = [Path(p) for p in custom_template_paths] if custom_template_paths else None
