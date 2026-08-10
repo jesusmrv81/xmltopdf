@@ -106,6 +106,13 @@ Ejemplos:
     )
 
     parser.add_argument(
+        "--refresh-resources",
+        action="store_true",
+        help="Re-descargar los recursos del SAT y mostrar los hashes nuevos "
+        "(para actualizar el manifiesto si el SAT cambió archivos)",
+    )
+
+    parser.add_argument(
         "--all",
         action="store_true",
         help="Con --download-resources, descarga también los XSD de validación",
@@ -119,6 +126,26 @@ Ejemplos:
 
     args = parser.parse_args()
     setup_logging(args.verbose)
+
+    # ── --refresh-resources ──────────────────────────────────────────────────
+    if args.refresh_resources:
+        from cfdi_pdf.sat.resources import MANIFEST, refresh_manifest
+
+        try:
+            refreshed = refresh_manifest()
+        except Exception as exc:
+            logger.error("No se pudo refrescar los recursos del SAT: %s", exc)
+            return 1
+
+        changed = {k: v for k, v in refreshed.items() if MANIFEST.get(k) != v}
+        if not changed:
+            print("✓ El manifiesto de recursos SAT está actualizado")
+            return 0
+
+        print("Los siguientes recursos cambiaron; actualiza MANIFEST en sat/resources.py:")
+        for key, value in sorted(changed.items()):
+            print(f'    "{key}": "{value}",')
+        return 1
 
     # ── --download-resources ──────────────────────────────────────────────────
     if args.download_resources:

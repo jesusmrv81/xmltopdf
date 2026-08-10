@@ -39,7 +39,7 @@ setup_json_logging()
 
 logger = logging.getLogger("cfdi_pdf.fastapi_example")
 
-app = FastAPI(title="CFDI PDF Service", version="0.2.0")
+app = FastAPI(title="CFDI PDF Service", version="0.3.0")
 
 
 def _track_render(cfdi: object, output: str) -> None:

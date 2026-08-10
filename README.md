@@ -3,7 +3,8 @@
 [![PyPI version](https://img.shields.io/pypi/v/cfdi-pdf.svg)](https://pypi.org/project/cfdi-pdf/)
 [![Python Version](https://img.shields.io/pypi/pyversions/cfdi-pdf.svg)](https://pypi.org/project/cfdi-pdf/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://github.com/jesusmrv81/xmltopdf/workflows/Tests/badge.svg)](https://github.com/jesusmrv81/xmltopdf/actions)
+[![Typing](https://img.shields.io/badge/typing-strict-228B22.svg)](https://pypi.org/project/cfdi-pdf/)
+[![CI / CD](https://github.com/jesusmrv81/xmltopdf/actions/workflows/ci.yml/badge.svg)](https://github.com/jesusmrv81/xmltopdf/actions)
 [![Coverage](https://img.shields.io/codecov/c/github/jesusmrv81/xmltopdf)](https://codecov.io/gh/jesusmrv81/xmltopdf)
 
 Biblioteca profesional para convertir CFDI 4.0 XML a PDF con templates modernos y extensibles.

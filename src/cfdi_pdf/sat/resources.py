@@ -282,3 +282,21 @@ _default_manager = SATResourceManager()
 def get_manager() -> SATResourceManager:
     """Devuelve el gestor por defecto (reconfigurable vía variables de entorno)."""
     return _default_manager
+
+
+def refresh_manifest() -> dict[str, str]:
+    """
+    Re-descarga todos los recursos del SAT y devuelve el manifiesto canónico actual.
+
+    Utilidad de mantenimiento: si el SAT publicó archivos nuevos, los hashes
+    diferirán del ``MANIFEST`` empaquetado. Devuelve el dict completo
+    ``{ruta: sha256}`` (canónico) para actualizar ``MANIFEST`` en este módulo.
+    """
+    manager = SATResourceManager(refresh=True, allow_unverified=True)
+    manager.ensure_all()
+
+    refreshed: dict[str, str] = {}
+    for relative in MANIFEST:
+        data = (manager.cache_dir / relative).read_bytes()
+        refreshed[relative] = hashlib.sha256(_canonicalize(relative, data)).hexdigest()
+    return refreshed

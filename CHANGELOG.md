@@ -7,7 +7,14 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-09
+
 ### Añadido
+- **`py.typed`**: el paquete publicado queda marcado como tipado para los
+  consumidores
+- **`cfdi-pdf --refresh-resources`**: re-descarga los recursos del SAT y
+  muestra los hashes nuevos para actualizar el manifiesto si el SAT cambió
+- Badges del README corregidos (CI / CD y typing)
 - **Lock de dependencias** (`requirements.lock`, con hashes SHA-256): el CI
   instala desde el lock y el audit corre `pip-audit -r requirements.lock`
   (reproducibilidad; ya no resuelve *latest* en cada build)
@@ -160,7 +167,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Sanitización de entrada UTF-8
 - Validación de namespaces SAT
 
-[Unreleased]: https://github.com/jesusmrv81/xmltopdf/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/jesusmrv81/xmltopdf/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/jesusmrv81/xmltopdf/releases/tag/v0.3.0
 [0.2.0]: https://github.com/jesusmrv81/xmltopdf/releases/tag/v0.2.0
 [0.1.0]: https://github.com/jesusmrv81/xmltopdf/releases/tag/v0.1.0
 

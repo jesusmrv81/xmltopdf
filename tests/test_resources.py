@@ -70,3 +70,21 @@ class TestDefaultCacheDir:
     def test_env_override(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("CFDI_PDF_CACHE_DIR", str(tmp_path / "cache"))
         assert default_cache_dir() == tmp_path / "cache"
+
+
+class TestRefreshManifest:
+    """Test suite para el refresco del manifiesto (mantenimiento del SAT)."""
+
+    def test_refresh_matches_manifest(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Re-descargar desde el mirror devuelve los mismos hashes (sin cambios SAT)."""
+        from cfdi_pdf.sat.resources import MANIFEST, refresh_manifest
+
+        monkeypatch.setenv("CFDI_PDF_CACHE_DIR", str(tmp_path / "cache"))
+        monkeypatch.setenv("CFDI_PDF_BASE_URLS", MIRROR_BASE_URL)
+
+        refreshed = refresh_manifest()
+
+        assert set(refreshed) == set(MANIFEST)
+        assert refreshed == MANIFEST
