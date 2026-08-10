@@ -2,7 +2,8 @@
 Servicio FastAPI que expone cfdi-pdf como microservicio.
 
 cfdi-pdf es una biblioteca 100% pura: no importa FastAPI ni ningún framework
-web. Este archivo es solo un adaptador de ejemplo que muestra cómo servirla.
+web. Este archivo es solo un adaptador de ejemplo que muestra cómo servirla:
+logging JSON, hook `on_render` para trackear UUIDs y opciones de validación.
 
 El método `render_bytes_from_string()` devuelve los bytes del PDF sin escribir
 a disco, que es exactamente lo que necesita un endpoint HTTP.
@@ -22,6 +23,7 @@ Ejemplo con curl:
          --data-binary @factura.xml -o factura.pdf
 """
 
+import logging
 from typing import Annotated
 
 from fastapi import Body, FastAPI, HTTPException, Query
@@ -29,12 +31,34 @@ from fastapi.responses import Response
 
 from cfdi_pdf import CFDIPDF
 from cfdi_pdf.exceptions import CFDIPDFError
+from cfdi_pdf.utils.logging import setup_json_logging
+
+# Los logs de cfdi_pdf.* salen como una línea JSON por evento (listos para
+# CloudWatch / Datadog / Loki).
+setup_json_logging()
+
+logger = logging.getLogger("cfdi_pdf.fastapi_example")
 
 app = FastAPI(title="CFDI PDF Service", version="0.2.0")
 
+
+def _track_render(cfdi: object, output: str) -> None:
+    """Hook on_render: registra cada conversión (UUID -> salida)."""
+    logger.info(
+        "render ok | uuid=%s | output=%s",
+        cfdi.timbre_fiscal.uuid,
+        output,  # type: ignore[attr-defined]
+    )
+
+
 # Instancia única reutilizada entre requests. La librería no guarda estado
 # mutable por request, así que es segura para uso concurrente.
-converter = CFDIPDF(template="minimal")
+converter = CFDIPDF(
+    template="minimal",
+    validate_catalogs=True,  # valida claves SAT (moneda, régimen, uso CFDI…)
+    max_xml_size=10 * 1024 * 1024,  # 10 MB
+    on_render=_track_render,
+)
 
 
 @app.get("/health")
