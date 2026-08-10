@@ -1,7 +1,9 @@
 """Main API for CFDI PDF library."""
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
+from typing import NamedTuple
 
 from .exceptions import CFDIPDFError
 from .models import CFDI
@@ -10,6 +12,37 @@ from .qr import SATQRGenerator
 from .render import RenderEngine, TemplateManager
 
 logger = logging.getLogger(__name__)
+
+# Callable invocado tras cada render con (cfdi, output) donde output es la ruta
+# del PDF o el nombre de archivo si no se escribió a disco.
+RenderHook = Callable[[CFDI, str], None]
+
+
+class BatchResult(NamedTuple):
+    """Resultado de procesar un archivo en ``render_batch``."""
+
+    source: Path
+    output: Path | None
+    error: str | None
+
+
+def _render_one(args: tuple[Path, str | Path | None, str | None, str | Path | None]) -> BatchResult:
+    """Worker para el modo paralelo de ``render_batch`` (pickleable)."""
+    xml_path, output_dir, template, logo_path = args
+    try:
+        pdf = CFDIPDF(
+            template=template or "minimal",
+            max_xml_size=None,
+        )
+        output = pdf.render(
+            xml_path=xml_path,
+            output_dir=output_dir,
+            template=template,
+            logo_path=logo_path,
+        )
+        return BatchResult(xml_path, output, None)
+    except Exception as exc:  # un error por archivo no aborta el lote
+        return BatchResult(xml_path, None, str(exc))
 
 
 class CFDIPDF:
@@ -35,20 +68,17 @@ class CFDIPDF:
     def __init__(
         self,
         template: str = "minimal",
-        locale: str = "es_MX",
-        currency_format: bool = True,
         custom_template_paths: list[str | Path] | None = None,
         validate_xsd: bool = False,
         validate_catalogs: bool = False,
         max_xml_size: int | None = 10_000_000,
+        on_render: RenderHook | None = None,
     ) -> None:
         """
         Initialize CFDIPDF converter.
 
         Args:
             template: Default template name (e.g., "minimal")
-            locale: Locale for formatting (default: "es_MX")
-            currency_format: Whether to format currencies
             custom_template_paths: Additional paths to search for templates
             validate_xsd: If True, validate the CFDI against the official SAT
                 XSD schema (cfdv40.xsd) during parsing.
@@ -56,10 +86,11 @@ class CFDIPDF:
                 régimen fiscal, uso CFDI, impuestos, etc.) during parsing.
             max_xml_size: Maximum XML size in bytes (default 10 MB). None
                 disables the limit.
+            on_render: Callable ``(cfdi, output)`` invocado tras cada render
+                exitoso; ``output`` es la ruta del PDF o el nombre de archivo.
         """
         self._template = template
-        self._locale = locale
-        self._currency_format = currency_format
+        self._on_render = on_render
 
         self._parser = CFDIParser(
             validate_xsd=validate_xsd,
@@ -122,6 +153,7 @@ class CFDIPDF:
             )
 
             logger.info("PDF saved to: %s", output_path)
+            self._notify_render(cfdi, str(output_path))
             return output_path
 
         except CFDIPDFError:
@@ -168,6 +200,7 @@ class CFDIPDF:
             )
 
             logger.info("PDF saved to: %s", output_path)
+            self._notify_render(cfdi, str(output_path))
             return output_path
 
         except CFDIPDFError:
@@ -210,6 +243,7 @@ class CFDIPDF:
             )
 
             filename = self._uuid_filename(cfdi)
+            self._notify_render(cfdi, filename)
             return pdf_bytes, filename
 
         except CFDIPDFError:
@@ -251,12 +285,62 @@ class CFDIPDF:
             )
 
             filename = self._uuid_filename(cfdi)
+            self._notify_render(cfdi, filename)
             return pdf_bytes, filename
 
         except CFDIPDFError:
             raise
         except Exception as exc:
             raise CFDIPDFError(f"Failed to render PDF: {exc}") from exc
+
+    def render_batch(
+        self,
+        xml_paths: list[str | Path],
+        output_dir: str | Path | None = None,
+        template: str | None = None,
+        logo_path: str | Path | None = None,
+        workers: int | None = None,
+    ) -> list[BatchResult]:
+        """
+        Render multiple XML files, reusing this instance.
+
+        En modo secuencial (``workers`` ≤ 1 o None) se reutiliza la misma
+        instancia (templates y recursos compilados una sola vez). Con
+        ``workers`` > 1 se procesa en paralelo con ``ProcessPoolExecutor``
+        (WeasyPrint no es thread-safe, pero sí multiproceso).
+
+        Args:
+            xml_paths: Lista de rutas de CFDI XML.
+            output_dir: Directorio de salida (por defecto, el de cada XML).
+            template: Template a usar (por defecto, el de la instancia).
+            logo_path: Logo a usar en todos.
+            workers: Número de procesos (None/1 = secuencial).
+
+        Returns:
+            Lista de ``BatchResult`` con (source, output | None, error | None).
+        """
+        paths = [Path(p) for p in xml_paths]
+
+        if workers is None or workers <= 1:
+            results: list[BatchResult] = []
+            for source in paths:
+                try:
+                    output = self.render(
+                        xml_path=source,
+                        output_dir=output_dir,
+                        template=template,
+                        logo_path=logo_path,
+                    )
+                    results.append(BatchResult(source, output, None))
+                except Exception as exc:  # un error no aborta el lote
+                    results.append(BatchResult(source, None, str(exc)))
+            return results
+
+        from concurrent.futures import ProcessPoolExecutor
+
+        tasks = [(source, output_dir, template, logo_path) for source in paths]
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            return list(executor.map(_render_one, tasks))
 
     def parse(self, xml_path: str | Path) -> CFDI:
         """Parse CFDI XML file without rendering."""
@@ -297,7 +381,16 @@ class CFDIPDF:
         """Get current default template."""
         return self._template
 
+    def set_render_hook(self, on_render: RenderHook | None) -> None:
+        """Set (or clear with None) the post-render hook."""
+        self._on_render = on_render
+
     # ── private helpers ───────────────────────────────────────────────────────
+
+    def _notify_render(self, cfdi: CFDI, output: str) -> None:
+        """Invoca el hook post-render si está configurado."""
+        if self._on_render is not None:
+            self._on_render(cfdi, output)
 
     @staticmethod
     def _uuid_filename(cfdi: CFDI) -> str:

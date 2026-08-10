@@ -82,22 +82,20 @@ los cambios del SAT se absorben sin re-publicar (se detectan por hash). Ver
     (`examples/fastapi_service.py`) + `render_bytes_from_string()`. La librería
     **sigue siendo pura** (cero dependencias web).
 
-14. **Rendimiento**
-    - `CFDIPDF` actualmente crea `CFDIParser`, `SATQRGenerator`,
-      `TemplateManager` y `RenderEngine` por instancia. Para batch de miles de
-      archivos, considerar reutilizar instancias y cachear catálogos (ya son
-      `Final`, no se recargan).
-    - WeasyPrint es el cuello de botella; evaluar batch de HTML y
-      paralelización a nivel de proceso.
+14. ✅ **Rendimiento / batch**
+    - `render_batch(xml_paths, workers=...)`: reutiliza la instancia en modo
+      secuencial (templates compilados una vez) y soporta paralelismo con
+      `ProcessPoolExecutor` (WeasyPrint es multiproceso-safe).
+    - Una instancia de `CFDIPDF` es reutilizable entre renders (sin estado
+      mutable); los recursos y templates se compilan una sola vez.
 
-15. **Telemetría / observabilidad**
-    Exponer `render` con logging estructurado (JSON) para entornos de
-    servicio, y un hook de post-render (para registrar el UUID procesado).
+15. **Telemetría / observabilidad** — ✅ Implementado: logging JSON
+    (`cfdi_pdf.utils.logging.setup_json_logging`) y hook `on_render` en
+    `CFDIPDF`.
 
-16. **i18n del template**
-    Los templates están en español fijo. El constructor ya acepta `locale`,
-    pero los templates no lo usan. Si se quiere multi-idioma, parametrizar
-    strings vía contexto.
+16. ~~**i18n del template**~~ — **Descartado**: un CFDI es fiscal mexicano,
+    siempre en español; los parámetros `locale`/`currency_format` (sin uso) se
+    eliminaron del constructor.
 
 ## Higiene menor
 

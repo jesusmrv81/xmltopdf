@@ -75,6 +75,8 @@ temp/
 *.pdf
 # Only ignore loose XML files at root; fixtures under tests/ are tracked
 /*.xml
+# Artifacts generated during test runs (PDFs/XMLs moved out of the root)
+tests/artifacts/
 
 # MyPy
 .mypy_cache/

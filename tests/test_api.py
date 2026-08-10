@@ -120,6 +120,79 @@ class TestCFDIPDF:
         assert pdf_bytes.startswith(b"%PDF")
         assert filename == "cce4d168-1234-5678-9abc-def012345678.pdf"
 
+    def test_render_batch_sequential(self, tmp_path: Path, valid_cfdi_40_xml: str) -> None:
+        """render_batch secuencial reutiliza la instancia y devuelve resultados."""
+        a = Path(tmp_path) / "a.xml"
+        b = Path(tmp_path) / "b.xml"
+        a.write_text(valid_cfdi_40_xml)
+        b.write_text(valid_cfdi_40_xml)
+        out = tmp_path / "pdfs"
+
+        pdf = CFDIPDF()
+        results = pdf.render_batch([a, b], output_dir=out)
+
+        assert len(results) == 2
+        assert all(r.error is None for r in results)
+        assert all(r.output is not None and r.output.exists() for r in results)
+        assert out / "cce4d168-1234-5678-9abc-def012345678.pdf" in [r.output for r in results]
+
+    def test_render_batch_reports_errors(self, tmp_path: Path, valid_cfdi_40_xml: str) -> None:
+        """Un archivo inválido no aborta el lote; se reporta su error."""
+        good = Path(tmp_path) / "good.xml"
+        bad = Path(tmp_path) / "bad.xml"
+        good.write_text(valid_cfdi_40_xml)
+        bad.write_text("xml roto")
+
+        pdf = CFDIPDF()
+        results = pdf.render_batch([good, bad], output_dir=tmp_path)
+
+        assert len(results) == 2
+        ok = {r.source.name: r for r in results}
+        assert ok["good.xml"].error is None
+        assert ok["bad.xml"].output is None
+        assert ok["bad.xml"].error is not None
+
+    def test_render_batch_parallel(self, tmp_path: Path, valid_cfdi_40_xml: str) -> None:
+        """render_batch en paralelo procesa todos los archivos."""
+        paths = []
+        for i in range(2):
+            p = tmp_path / f"f{i}.xml"
+            p.write_text(valid_cfdi_40_xml)
+            paths.append(p)
+
+        pdf = CFDIPDF()
+        results = pdf.render_batch(paths, output_dir=tmp_path, workers=2)
+
+        assert len(results) == 2
+        assert all(r.error is None for r in results)
+        assert all(r.output is not None for r in results)
+
+    def test_on_render_hook_called(self, tmp_path: Path, valid_cfdi_40_xml: str) -> None:
+        """El hook on_render recibe (cfdi, output) tras renderizar."""
+        events: list[tuple[str, str]] = []
+
+        def hook(cfdi: object, output: str) -> None:
+            events.append((cfdi.timbre_fiscal.uuid, output))  # type: ignore[attr-defined]
+
+        pdf = CFDIPDF(on_render=hook)
+        pdf.render_from_string(valid_cfdi_40_xml, output_dir=tmp_path)
+
+        assert len(events) == 1
+        assert events[0][0] == "CCE4D168-1234-5678-9ABC-DEF012345678"
+        assert events[0][1].endswith(".pdf")
+
+    def test_on_render_hook_with_bytes(self, valid_cfdi_40_xml: str) -> None:
+        """El hook con render_bytes_from_string recibe el nombre de archivo."""
+        events: list[str] = []
+
+        def hook(cfdi: object, output: str) -> None:
+            events.append(output)
+
+        pdf = CFDIPDF(on_render=hook)
+        pdf.render_bytes_from_string(valid_cfdi_40_xml)
+
+        assert events == ["cce4d168-1234-5678-9abc-def012345678.pdf"]
+
     def test_render_invalid_xml_raises_error(self, invalid_xml: str) -> None:
         """Test that invalid XML raises error."""
         pdf = CFDIPDF()

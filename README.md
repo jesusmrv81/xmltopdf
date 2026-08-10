@@ -178,11 +178,11 @@ cfdi-pdf factura.xml --template clasico
 ```python
 CFDIPDF(
     template: str = "minimal",
-    locale: str = "es_MX",
-    currency_format: bool = True,
     custom_template_paths: list[str | Path] | None = None,
     validate_xsd: bool = False,
     validate_catalogs: bool = False,
+    max_xml_size: int | None = 10_000_000,
+    on_render: Callable[[CFDI, str], None] | None = None,
 )
 ```
 
@@ -250,6 +250,49 @@ Además de Pagos 2.0, Nómina 1.2 y Carta Porte 3.1, se modelan **Leyendas
 Fiscales**, **IEPS** e **Información Global** (se renderizan en los templates).
 La `cfdi:Addenda` se detecta (`cfdi.has_addenda`) pero **se ignora** por
 seguridad: es XML arbitrario del emisor, sin valor fiscal.
+
+### Procesamiento por lotes y rendimiento
+
+`render_batch()` procesa varios XML reutilizando la instancia (templates
+compilados una sola vez) y puede paralelizar WeasyPrint con múltiples procesos:
+
+```python
+from cfdi_pdf import CFDIPDF
+
+pdf = CFDIPDF()
+results = pdf.render_batch(
+    ["enero/a.xml", "enero/b.xml"],
+    output_dir="./pdfs",
+    workers=4,  # None/1 = secuencial; >1 = multiproceso
+)
+
+for result in results:
+    # BatchResult(source, output | None, error | None)
+    print(result.source.name, result.output or result.error)
+```
+
+### Telemetría (logging JSON + hook de post-render)
+
+Para entornos de servicio, emite logs en una línea JSON por evento:
+
+```python
+from cfdi_pdf.utils.logging import setup_json_logging
+
+setup_json_logging()  # los logs de cfdi_pdf.* salen como JSON a stdout
+```
+
+Y registra cada render con un hook `on_render(cfdi, output)`:
+
+```python
+from cfdi_pdf import CFDIPDF
+
+
+def track(cfdi, output):
+    print("uuid:", cfdi.timbre_fiscal.uuid, "->", output)
+
+
+pdf = CFDIPDF(on_render=track)
+```
 
 ### Recursos del SAT (XSLT/XSD) — descarga en runtime
 
@@ -444,6 +487,13 @@ pip install -e ".[dev]"
 # validación XSD; de lo contrario se descargan en la primera ejecución
 cfdi-pdf --download-resources --all
 ```
+
+> Las dependencias se fijan en `requirements.lock` (con hashes) para
+> reproducibilidad de CI/deploys. Para regenerarlo:
+>
+> ```bash
+> pip-compile pyproject.toml --extra dev --generate-hashes -o requirements.lock
+> ```
 
 ### Ejecutar Tests
 

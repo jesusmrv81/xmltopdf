@@ -8,23 +8,29 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Añadido
-- **Límite de tamaño de XML** (`max_xml_size`, 10 MB por defecto) contra DoS;
-  `None` lo desactiva. Nueva excepción `XMLTooLargeError`
-- **Validación del logo**: allowlist de extensiones (PNG/JPG/SVG), verificación
-  de **magic bytes** y **límite de tamaño** (1 MB); un logo inválido se ignora
-- **`SECURITY.md`**: sección de **superficie de ataque** con controles por
-  entrada (parser, templates, QR, logo, recursos SAT, sellos)
-- **`validate_catalogs=True`** en `CFDIParser`/`CFDIPDF` (valida claves SAT sin XSD)
-- **Complementos**: Leyendas Fiscales, IEPS e Información Global; `Addenda`
-  detectada (`has_addenda`) e ignorada por seguridad
-- **QR**: parámetro `fe` percent-encoded
-- **Store de certificados SAT** para `verify_sello_sat` (por `NoCertificadoSAT`)
+- **Lock de dependencias** (`requirements.lock`, con hashes SHA-256): el CI
+  instala desde el lock y el audit corre `pip-audit -r requirements.lock`
+  (reproducibilidad; ya no resuelve *latest* en cada build)
+- **Telemetría**: logging estructurado JSON (`utils/logging.setup_json_logging`)
+  y hook `on_render(cfdi, output)` en `CFDIPDF` (+ `set_render_hook`)
+- **`render_batch(xml_paths, output_dir, workers=...)`**: procesa lotes
+  reutilizando la instancia (secuencial) o en paralelo (ProcessPoolExecutor);
+  devuelve `BatchResult` por archivo sin abortar ante errores
+- **Límite de tamaño de XML** (`max_xml_size`, 10 MB) + `XMLTooLargeError`
+- **Validación del logo** (extensiones, magic bytes, 1 MB)
+- **`SECURITY.md`**: sección de superficie de ataque
+- **`validate_catalogs=True`**, complementos Leyendas/IEPS/InfoGlobal,
+  `Addenda` ignorada, QR `fe` encode, store de certificados SAT
+
+### Eliminado
+- Parámetros sin uso `locale` y `currency_format` del constructor `CFDIPDF`
+  (la idea de i18n se descartó: un CFDI es fiscal mexicano en español)
 
 ### Corregido
-- Parser `recover=False` (un XML malformado lanza `XMLParseError`)
-- Examples arreglados (usaban la API antigua)
+- Parser `recover=False`; examples con API actual
 
 ### Cambiado
+- H10: artifactos de prueba movidos de la raíz a `tests/artifacts/`
 - CI: `pip-audit` en PRs, caché de recursos SAT, action de PyPI pinneado
 
 ## [0.2.0] - 2026-08-09

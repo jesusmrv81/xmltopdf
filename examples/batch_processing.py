@@ -171,6 +171,30 @@ def batch_with_error_report() -> None:
     print(f"\nReporte guardado en: {report_file}")
 
 
+def batch_with_render_batch() -> None:
+    """Procesamiento por lotes con render_batch (secuencial o en paralelo)."""
+    from cfdi_pdf import CFDIPDF
+
+    xml_dir = Path("./facturas")
+    output_dir = Path("./pdfs")
+    output_dir.mkdir(exist_ok=True)
+
+    xml_files = list(xml_dir.glob("*.xml"))
+    print(f"Procesando {len(xml_files)} archivos con render_batch...")
+
+    # Reutiliza la instancia (secuencial). workers>1 usa multiproceso.
+    pdf = CFDIPDF()
+    results = pdf.render_batch(xml_files, output_dir=output_dir, workers=2)
+
+    ok = [r for r in results if r.error is None]
+    err = [r for r in results if r.error is not None]
+    for r in ok:
+        print(f"✓ {r.source.name} -> {r.output}")
+    for r in err:
+        print(f"✗ {r.source.name}: {r.error}")
+    print(f"\nResumen: {len(ok)} exitosos, {len(err)} errores")
+
+
 if __name__ == "__main__":
     print("=== Conversión por Lotes Básica ===")
     print("Nota: Requiere archivos XML en ./facturas/")
@@ -185,3 +209,6 @@ if __name__ == "__main__":
 
     print("\n=== Conversión con Reporte de Errores ===")
     # batch_with_error_report()
+
+    print("\n=== Conversión con render_batch ===")
+    # batch_with_render_batch()
